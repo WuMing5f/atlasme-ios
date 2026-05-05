@@ -44,6 +44,9 @@ struct AtlasCopy {
     var travelPersonality: String { language == .chinese ? "旅行人格" : "Travel personality" }
     var addJourney: String { language == .chinese ? "添加旅程" : "Add journey" }
     var languageToggle: String { language == .chinese ? "中文 / EN" : "EN / 中文" }
+    var viewAll: String { language == .chinese ? "查看全部" : "View all" }
+    var handpicked: String { language == .chinese ? "为你精选的目的地" : "Handpicked places for you" }
+    var currentSegment: String { language == .chinese ? "当前路段" : "Current segment" }
 }
 
 private struct AtlasLanguageKey: EnvironmentKey {
@@ -117,11 +120,13 @@ struct AtlasRootView: View {
 }
 
 enum AtlasColor {
-    static let night = Color(red: 0.02, green: 0.06, blue: 0.11)
-    static let night2 = Color(red: 0.04, green: 0.10, blue: 0.16)
+    static let night = Color(red: 0.01, green: 0.05, blue: 0.08)
+    static let night2 = Color(red: 0.03, green: 0.10, blue: 0.14)
+    static let deepTeal = Color(red: 0.02, green: 0.16, blue: 0.18)
     static let ink = Color(red: 1.0, green: 0.96, blue: 0.90)
     static let muted = Color(red: 0.62, green: 0.67, blue: 0.72)
-    static let gold = Color(red: 0.94, green: 0.77, blue: 0.42)
+    static let gold = Color(red: 0.92, green: 0.66, blue: 0.32)
+    static let paleGold = Color(red: 0.99, green: 0.82, blue: 0.52)
     static let aqua = Color(red: 0.56, green: 0.85, blue: 0.82)
     static let coral = Color(red: 0.94, green: 0.51, blue: 0.41)
     static let green = Color(red: 0.54, green: 0.74, blue: 0.47)
@@ -148,6 +153,16 @@ enum AtlasColor {
     }
 }
 
+extension Font {
+    static func atlasDisplay(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
+        .system(size: size, weight: weight, design: .serif)
+    }
+
+    static func atlasText(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
+        .system(size: size, weight: weight, design: .rounded)
+    }
+}
+
 struct AtlasTabBar: View {
     @Environment(\.copy) private var copy
     @Environment(\.atlasTheme) private var theme
@@ -162,7 +177,7 @@ struct AtlasTabBar: View {
             tab(.me, icon: "person.fill", label: copy.me)
         }
         .frame(height: 68)
-        .background(theme == .dark ? Color.black.opacity(0.42) : Color.white.opacity(0.72), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .background(theme == .dark ? Color.black.opacity(0.52) : Color.white.opacity(0.78), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .stroke(theme == .dark ? Color.white.opacity(0.12) : Color.black.opacity(0.06))
@@ -186,4 +201,3 @@ struct AtlasTabBar: View {
         .buttonStyle(.plain)
     }
 }
-
