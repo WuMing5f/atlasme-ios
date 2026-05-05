@@ -9,6 +9,15 @@ enum AtlasLanguage {
     }
 }
 
+enum AtlasTheme {
+    case dark
+    case light
+
+    mutating func toggle() {
+        self = self == .dark ? .light : .dark
+    }
+}
+
 struct AtlasCopy {
     let language: AtlasLanguage
 
@@ -41,10 +50,19 @@ private struct AtlasLanguageKey: EnvironmentKey {
     static let defaultValue: AtlasLanguage = .english
 }
 
+private struct AtlasThemeKey: EnvironmentKey {
+    static let defaultValue: AtlasTheme = .dark
+}
+
 extension EnvironmentValues {
     var atlasLanguage: AtlasLanguage {
         get { self[AtlasLanguageKey.self] }
         set { self[AtlasLanguageKey.self] = newValue }
+    }
+
+    var atlasTheme: AtlasTheme {
+        get { self[AtlasThemeKey.self] }
+        set { self[AtlasThemeKey.self] = newValue }
     }
 
     var copy: AtlasCopy {
@@ -63,6 +81,7 @@ enum AtlasTab: String, CaseIterable {
 struct AtlasRootView: View {
     @State private var selectedTab: AtlasTab = .home
     @State private var language: AtlasLanguage = .english
+    @State private var theme: AtlasTheme = .dark
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -77,19 +96,23 @@ struct AtlasRootView: View {
                 case .explore:
                     ExploreView()
                 case .me:
-                    ProfileView(toggleLanguage: {
-                        language.toggle()
-                    })
+                    ProfileView(
+                        toggleLanguage: { language.toggle() },
+                        toggleTheme: { theme.toggle() }
+                    )
                 }
             }
             .environment(\.atlasLanguage, language)
+            .environment(\.atlasTheme, theme)
 
             AtlasTabBar(selectedTab: $selectedTab)
                 .environment(\.atlasLanguage, language)
+                .environment(\.atlasTheme, theme)
                 .padding(.horizontal, 18)
                 .padding(.bottom, 12)
         }
-        .background(AtlasColor.night.ignoresSafeArea())
+        .background(theme == .dark ? AtlasColor.night : AtlasColor.paper)
+        .ignoresSafeArea()
     }
 }
 
@@ -104,10 +127,30 @@ enum AtlasColor {
     static let green = Color(red: 0.54, green: 0.74, blue: 0.47)
     static let paper = Color(red: 0.95, green: 0.91, blue: 0.84)
     static let paperInk = Color(red: 0.16, green: 0.13, blue: 0.09)
+
+    static func bg(_ theme: AtlasTheme) -> Color {
+        theme == .dark ? night : paper
+    }
+    static func bg2(_ theme: AtlasTheme) -> Color {
+        theme == .dark ? night2 : Color(red: 0.92, green: 0.88, blue: 0.81)
+    }
+    static func text(_ theme: AtlasTheme) -> Color {
+        theme == .dark ? ink : paperInk
+    }
+    static func subtext(_ theme: AtlasTheme) -> Color {
+        theme == .dark ? muted : Color(red: 0.44, green: 0.40, blue: 0.35)
+    }
+    static func card(_ theme: AtlasTheme) -> Color {
+        theme == .dark ? Color.white.opacity(0.055) : Color.white.opacity(0.62)
+    }
+    static func cardStroke(_ theme: AtlasTheme) -> Color {
+        theme == .dark ? Color.white.opacity(0.12) : Color.black.opacity(0.06)
+    }
 }
 
 struct AtlasTabBar: View {
     @Environment(\.copy) private var copy
+    @Environment(\.atlasTheme) private var theme
     @Binding var selectedTab: AtlasTab
 
     var body: some View {
@@ -119,12 +162,12 @@ struct AtlasTabBar: View {
             tab(.me, icon: "person.fill", label: copy.me)
         }
         .frame(height: 68)
-        .background(.black.opacity(0.42), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .background(theme == .dark ? Color.black.opacity(0.42) : Color.white.opacity(0.72), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .stroke(.white.opacity(0.12))
+                .stroke(theme == .dark ? Color.white.opacity(0.12) : Color.black.opacity(0.06))
         )
-        .shadow(color: .black.opacity(0.32), radius: 24, y: 12)
+        .shadow(color: theme == .dark ? Color.black.opacity(0.32) : Color.black.opacity(0.08), radius: 24, y: 12)
     }
 
     private func tab(_ tab: AtlasTab, icon: String, label: String) -> some View {
@@ -137,7 +180,7 @@ struct AtlasTabBar: View {
                 Text(label)
                     .font(.system(size: 10, weight: .bold))
             }
-            .foregroundStyle(selectedTab == tab ? AtlasColor.gold : Color(red: 0.46, green: 0.52, blue: 0.58))
+            .foregroundStyle(selectedTab == tab ? AtlasColor.gold : AtlasColor.subtext(theme))
             .frame(maxWidth: .infinity)
         }
         .buttonStyle(.plain)

@@ -3,11 +3,12 @@ import SwiftUI
 struct HomeView: View {
     @Environment(\.copy) private var copy
     @Environment(\.atlasLanguage) private var language
+    @Environment(\.atlasTheme) private var theme
     @State private var showsGlobeStyle = false
 
     var body: some View {
         ZStack {
-            LinearGradient(colors: [Color(red: 0.03, green: 0.06, blue: 0.11), AtlasColor.night2, AtlasColor.night], startPoint: .top, endPoint: .bottom)
+            LinearGradient(colors: [AtlasColor.bg(theme).opacity(0.9), AtlasColor.bg2(theme), AtlasColor.bg(theme)], startPoint: .top, endPoint: .bottom)
                 .ignoresSafeArea()
 
             VStack(alignment: .leading, spacing: 0) {
@@ -18,7 +19,7 @@ struct HomeView: View {
                             showsGlobeStyle = true
                         } label: {
                             Image(systemName: "slider.horizontal.3")
-                                .foregroundStyle(AtlasColor.ink)
+                                .foregroundStyle(AtlasColor.text(theme))
                         }
                     )
                 )
@@ -26,13 +27,13 @@ struct HomeView: View {
 
                 Text(copy.homeTitle)
                     .font(.system(size: 34, weight: .heavy))
-                    .foregroundStyle(AtlasColor.ink)
+                    .foregroundStyle(AtlasColor.text(theme))
                     .lineSpacing(-3)
                     .padding(.top, 28)
 
                 Text(copy.homeSubtitle)
                     .font(.system(size: 13, weight: .regular))
-                    .foregroundStyle(AtlasColor.muted)
+                    .foregroundStyle(AtlasColor.subtext(theme))
                     .lineSpacing(4)
                     .padding(.top, 12)
 
@@ -55,10 +56,10 @@ struct HomeView: View {
                                 .foregroundStyle(AtlasColor.gold)
                             Text(AtlasData.journeys[0].title(language: language))
                                 .font(.system(size: 17, weight: .bold))
-                                .foregroundStyle(AtlasColor.ink)
+                                .foregroundStyle(AtlasColor.text(theme))
                             Text("\(AtlasData.journeys[0].route(language: language))\n\(AtlasData.journeys[0].date)")
                                 .font(.system(size: 12))
-                                .foregroundStyle(AtlasColor.muted)
+                                .foregroundStyle(AtlasColor.subtext(theme))
                         }
                         Spacer()
                     }
@@ -78,6 +79,7 @@ struct HomeView: View {
 }
 
 struct StatTile: View {
+    @Environment(\.atlasTheme) private var theme
     let value: String
     let label: String
 
@@ -89,7 +91,7 @@ struct StatTile: View {
                     .foregroundStyle(AtlasColor.gold)
                 Text(label)
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(AtlasColor.muted)
+                    .foregroundStyle(AtlasColor.subtext(theme))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -99,6 +101,7 @@ struct StatTile: View {
 struct JourneysView: View {
     @Environment(\.copy) private var copy
     @Environment(\.atlasLanguage) private var language
+    @Environment(\.atlasTheme) private var theme
     @State private var showsAddJourney = false
 
     var body: some View {
@@ -108,7 +111,7 @@ struct JourneysView: View {
             } label: {
                 Image(systemName: "plus")
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(AtlasColor.ink)
+                    .foregroundStyle(AtlasColor.text(theme))
             }
         )) {
             ScrollView {
@@ -121,10 +124,10 @@ struct JourneysView: View {
                                 VStack(alignment: .leading, spacing: 7) {
                                     Text(journey.title(language: language))
                                         .font(.system(size: 18, weight: .bold))
-                                        .foregroundStyle(AtlasColor.ink)
+                                        .foregroundStyle(AtlasColor.text(theme))
                                     Text("\(journey.route(language: language))\n\(journey.distance)")
                                         .font(.system(size: 12))
-                                        .foregroundStyle(AtlasColor.muted)
+                                        .foregroundStyle(AtlasColor.subtext(theme))
                                     HStack {
                                         ForEach(journey.tags, id: \.self) { tag in
                                             ChipLabel(title: tag)
@@ -149,6 +152,7 @@ struct JourneysView: View {
 
 struct MapReplayView: View {
     @Environment(\.copy) private var copy
+    @Environment(\.atlasTheme) private var theme
 
     var body: some View {
         DarkScreen(title: copy.replayTitle, subtitle: copy.replaySubtitle) {
@@ -167,10 +171,10 @@ struct MapReplayView: View {
                                     .foregroundStyle(AtlasColor.gold)
                                 Text("Train to Machu Picchu")
                                     .font(.system(size: 18, weight: .bold))
-                                    .foregroundStyle(AtlasColor.ink)
+                                    .foregroundStyle(AtlasColor.text(theme))
                                 Text("Ollantaytambo → Aguas Calientes\n1h 45m · 43 km")
                                     .font(.system(size: 12))
-                                    .foregroundStyle(AtlasColor.muted)
+                                    .foregroundStyle(AtlasColor.subtext(theme))
                             }
                             Spacer()
                         }
@@ -185,12 +189,12 @@ struct MapReplayView: View {
                                     .fill(AtlasColor.gold)
                                     .frame(width: 56, height: 56)
                                 Image(systemName: "play.fill")
-                                    .foregroundStyle(AtlasColor.night)
+                                    .foregroundStyle(AtlasColor.bg(theme))
                             }
                             Image(systemName: "goforward.10")
                         }
                         .font(.system(size: 22, weight: .bold))
-                        .foregroundStyle(AtlasColor.ink)
+                        .foregroundStyle(AtlasColor.text(theme))
                     }
                 }
                 .padding(.bottom, 86)
@@ -202,75 +206,58 @@ struct MapReplayView: View {
 struct ExploreView: View {
     @Environment(\.copy) private var copy
     @Environment(\.atlasLanguage) private var language
+    @Environment(\.atlasTheme) private var theme
 
     var body: some View {
-        ZStack {
-            AtlasColor.paper.ignoresSafeArea()
+        DarkScreen(title: copy.exploreTitle, subtitle: copy.exploreSubtitle, trailing: AnyView(
+            Image(systemName: "heart")
+                .font(.system(size: 16, weight: .bold))
+                .foregroundStyle(AtlasColor.text(theme))
+        )) {
+            ScrollView {
+                VStack(spacing: 14) {
+                    Text("Search cities, nature, food, rail routes")
+                        .font(.system(size: 13))
+                        .foregroundStyle(AtlasColor.subtext(theme))
+                        .frame(maxWidth: .infinity, minHeight: 46, alignment: .leading)
+                        .padding(.horizontal, 16)
+                        .background(theme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05), in: RoundedRectangle(cornerRadius: 17, style: .continuous))
 
-            VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    Image(systemName: "safari.fill")
-                        .foregroundStyle(AtlasColor.gold)
-                    Text(copy.explore)
-                        .font(.system(size: 18, weight: .bold))
-                    Spacer()
-                    Image(systemName: "heart")
-                }
-                .foregroundStyle(AtlasColor.paperInk)
-                .padding(.top, 10)
+                    HStack {
+                        FilterPill(title: "For you", active: true)
+                        FilterPill(title: "Trending", active: false)
+                        FilterPill(title: "Near you", active: false)
+                    }
 
-                Text(copy.exploreTitle)
-                    .font(.system(size: 30, weight: .heavy))
-                    .foregroundStyle(AtlasColor.paperInk)
-                    .padding(.top, 30)
-
-                Text(copy.exploreSubtitle)
-                    .font(.system(size: 13))
-                    .foregroundStyle(Color(red: 0.44, green: 0.40, blue: 0.35))
-                    .padding(.top, 10)
-
-                Text("Search cities, nature, food, rail routes")
-                    .font(.system(size: 13))
-                    .foregroundStyle(Color(red: 0.46, green: 0.42, blue: 0.37))
-                    .frame(maxWidth: .infinity, minHeight: 46, alignment: .leading)
-                    .padding(.horizontal, 16)
-                    .background(.white.opacity(0.62), in: RoundedRectangle(cornerRadius: 17, style: .continuous))
-                    .padding(.top, 18)
-
-                HStack {
-                    FilterPill(title: "For you", active: true)
-                    FilterPill(title: "Trending", active: false)
-                    FilterPill(title: "Near you", active: false)
-                }
-                .padding(.top, 16)
-
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                    ForEach(AtlasData.places) { place in
-                        VStack(alignment: .leading, spacing: 0) {
-                            GradientThumb(colors: place.colors)
-                                .frame(height: 132)
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text(place.name)
-                                    .font(.system(size: 18, weight: .bold))
-                                Text(place.country)
-                                    .font(.system(size: 11, weight: .bold))
-                                    .foregroundStyle(Color(red: 0.44, green: 0.40, blue: 0.35))
-                                Text(place.description(language: language))
-                                    .font(.system(size: 11))
-                                    .foregroundStyle(Color(red: 0.44, green: 0.40, blue: 0.35))
-                                    .lineLimit(3)
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                        ForEach(AtlasData.places) { place in
+                            VStack(alignment: .leading, spacing: 0) {
+                                GradientThumb(colors: place.colors)
+                                    .frame(height: 132)
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text(place.name)
+                                        .font(.system(size: 18, weight: .bold))
+                                        .foregroundStyle(AtlasColor.text(theme))
+                                    Text(place.country)
+                                        .font(.system(size: 11, weight: .bold))
+                                        .foregroundStyle(AtlasColor.subtext(theme))
+                                    Text(place.description(language: language))
+                                        .font(.system(size: 11))
+                                        .foregroundStyle(AtlasColor.subtext(theme))
+                                        .lineLimit(3)
+                                }
+                                .padding(12)
                             }
-                            .padding(12)
+                            .background(AtlasColor.bg2(theme), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                                    .stroke(AtlasColor.cardStroke(theme))
+                            )
                         }
-                        .background(Color(red: 1.0, green: 0.98, blue: 0.94), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-                        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
                     }
                 }
-                .padding(.top, 18)
-
-                Spacer(minLength: 96)
+                .padding(.bottom, 96)
             }
-            .padding(.horizontal, 24)
         }
     }
 }
@@ -278,40 +265,57 @@ struct ExploreView: View {
 struct ProfileView: View {
     @Environment(\.copy) private var copy
     @Environment(\.atlasLanguage) private var language
+    @Environment(\.atlasTheme) private var theme
     let toggleLanguage: () -> Void
+    let toggleTheme: () -> Void
     @State private var showsGlobeStyle = false
 
     var body: some View {
-        DarkScreen(title: copy.profileTitle, subtitle: copy.travelPersonality, trailing: AnyView(
-            Button(copy.languageToggle, action: toggleLanguage)
-                .font(.system(size: 12, weight: .bold))
-                .foregroundStyle(AtlasColor.gold)
-        )) {
+        DarkScreen(title: copy.profileTitle, subtitle: copy.travelPersonality) {
             ScrollView {
                 VStack(spacing: 14) {
+                    // User card
                     GlassCard {
                         HStack(spacing: 14) {
                             Circle()
                                 .fill(AtlasColor.gold)
                                 .frame(width: 58, height: 58)
-                                .overlay(Image(systemName: "person.fill").foregroundStyle(AtlasColor.night))
+                                .overlay(Image(systemName: "person.fill").foregroundStyle(AtlasColor.bg(theme)))
                             VStack(alignment: .leading, spacing: 5) {
                                 Text("Alex Morgan")
                                     .font(.system(size: 18, weight: .bold))
-                                    .foregroundStyle(AtlasColor.ink)
+                                    .foregroundStyle(AtlasColor.text(theme))
                                 Text(copy.travelPersonality)
                                     .font(.system(size: 12))
-                                    .foregroundStyle(AtlasColor.muted)
+                                    .foregroundStyle(AtlasColor.subtext(theme))
                             }
                             Spacer()
                         }
                     }
 
+                    // Settings card
+                    GlassCard {
+                        VStack(spacing: 0) {
+                            settingsRow(
+                                icon: "globe",
+                                title: copy.languageToggle,
+                                action: toggleLanguage
+                            )
+                            Divider().background(AtlasColor.cardStroke(theme))
+                            settingsRow(
+                                icon: theme == .dark ? "sun.max.fill" : "moon.fill",
+                                title: theme == .dark ? "Light Mode" : "Dark Mode",
+                                action: toggleTheme
+                            )
+                        }
+                    }
+
+                    // Badge wall
                     GlassCard {
                         VStack(alignment: .leading, spacing: 14) {
                             Text(copy.badgeWall)
                                 .font(.system(size: 20, weight: .bold))
-                                .foregroundStyle(AtlasColor.ink)
+                                .foregroundStyle(AtlasColor.text(theme))
                             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 12) {
                                 ForEach(AtlasData.badges) { badge in
                                     VStack(spacing: 6) {
@@ -325,7 +329,7 @@ struct ProfileView: View {
                                             .opacity(badge.locked ? 0.45 : 1)
                                         Text(badge.title(language: language))
                                             .font(.system(size: 9, weight: .bold))
-                                            .foregroundStyle(AtlasColor.ink)
+                                            .foregroundStyle(AtlasColor.text(theme))
                                             .multilineTextAlignment(.center)
                                             .lineLimit(2)
                                             .opacity(badge.locked ? 0.45 : 1)
@@ -335,6 +339,7 @@ struct ProfileView: View {
                         }
                     }
 
+                    // Globe style
                     Button {
                         showsGlobeStyle = true
                     } label: {
@@ -345,14 +350,14 @@ struct ProfileView: View {
                                 VStack(alignment: .leading) {
                                     Text(copy.globeStyle)
                                         .font(.system(size: 16, weight: .bold))
-                                        .foregroundStyle(AtlasColor.ink)
+                                        .foregroundStyle(AtlasColor.text(theme))
                                     Text("Night Atlas, Real Geography, Vintage, Anime, Terrain")
                                         .font(.system(size: 12))
-                                        .foregroundStyle(AtlasColor.muted)
+                                        .foregroundStyle(AtlasColor.subtext(theme))
                                 }
                                 Spacer()
                                 Image(systemName: "chevron.right")
-                                    .foregroundStyle(AtlasColor.muted)
+                                    .foregroundStyle(AtlasColor.subtext(theme))
                             }
                         }
                     }
@@ -367,9 +372,31 @@ struct ProfileView: View {
                 .presentationDragIndicator(.visible)
         }
     }
+
+    private func settingsRow(icon: String, title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack {
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(AtlasColor.gold)
+                    .frame(width: 28)
+                Text(title)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(AtlasColor.text(theme))
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(AtlasColor.subtext(theme))
+            }
+            .padding(.vertical, 14)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
 }
 
 struct DarkScreen<Content: View>: View {
+    @Environment(\.atlasTheme) private var theme
     let title: String
     let subtitle: String
     let trailing: AnyView?
@@ -384,7 +411,7 @@ struct DarkScreen<Content: View>: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(colors: [Color(red: 0.03, green: 0.06, blue: 0.11), Color(red: 0.05, green: 0.10, blue: 0.16)], startPoint: .top, endPoint: .bottom)
+            LinearGradient(colors: [AtlasColor.bg(theme).opacity(0.9), AtlasColor.bg2(theme)], startPoint: .top, endPoint: .bottom)
                 .ignoresSafeArea()
 
             VStack(alignment: .leading, spacing: 0) {
@@ -392,11 +419,11 @@ struct DarkScreen<Content: View>: View {
                     .padding(.top, 10)
                 Text(title)
                     .font(.system(size: 30, weight: .heavy))
-                    .foregroundStyle(AtlasColor.ink)
+                    .foregroundStyle(AtlasColor.text(theme))
                     .padding(.top, 26)
                 Text(subtitle)
                     .font(.system(size: 13))
-                    .foregroundStyle(AtlasColor.muted)
+                    .foregroundStyle(AtlasColor.subtext(theme))
                     .lineSpacing(4)
                     .padding(.top, 8)
                 content()
@@ -408,21 +435,23 @@ struct DarkScreen<Content: View>: View {
 }
 
 struct FilterPill: View {
+    @Environment(\.atlasTheme) private var theme
     let title: String
     let active: Bool
 
     var body: some View {
         Text(title)
             .font(.system(size: 12, weight: .bold))
-            .foregroundStyle(active ? AtlasColor.ink : Color(red: 0.37, green: 0.33, blue: 0.29))
+            .foregroundStyle(active ? AtlasColor.bg(theme) : AtlasColor.subtext(theme))
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .background(active ? AtlasColor.paperInk : AtlasColor.paperInk.opacity(0.08), in: Capsule())
+            .background(active ? AtlasColor.gold : (theme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05)), in: Capsule())
     }
 }
 
 struct GlobeStyleSheet: View {
     @Environment(\.copy) private var copy
+    @Environment(\.atlasTheme) private var theme
 
     private let styles: [(String, String, Color)] = [
         ("Night Atlas", "City lights, golden arcs, private map.", Color(red: 0.18, green: 0.51, blue: 0.63)),
@@ -434,12 +463,12 @@ struct GlobeStyleSheet: View {
 
     var body: some View {
         ZStack {
-            AtlasColor.night.ignoresSafeArea()
+            AtlasColor.bg(theme).ignoresSafeArea()
 
             VStack(alignment: .leading, spacing: 14) {
                 Text(copy.globeStyle)
                     .font(.system(size: 24, weight: .heavy))
-                    .foregroundStyle(AtlasColor.ink)
+                    .foregroundStyle(AtlasColor.text(theme))
                     .padding(.bottom, 4)
 
                 ForEach(styles, id: \.0) { style in
@@ -451,10 +480,10 @@ struct GlobeStyleSheet: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(style.0)
                                     .font(.system(size: 16, weight: .bold))
-                                    .foregroundStyle(AtlasColor.ink)
+                                    .foregroundStyle(AtlasColor.text(theme))
                                 Text(style.1)
                                     .font(.system(size: 12))
-                                    .foregroundStyle(AtlasColor.muted)
+                                    .foregroundStyle(AtlasColor.subtext(theme))
                             }
                             Spacer()
                             if style.0 == "Night Atlas" {
@@ -473,14 +502,15 @@ struct GlobeStyleSheet: View {
 
 struct AddJourneySheet: View {
     @Environment(\.copy) private var copy
+    @Environment(\.atlasTheme) private var theme
 
     var body: some View {
         ZStack {
-            AtlasColor.night.ignoresSafeArea()
+            AtlasColor.bg(theme).ignoresSafeArea()
             VStack(alignment: .leading, spacing: 14) {
                 Text(copy.addJourney)
                     .font(.system(size: 24, weight: .heavy))
-                    .foregroundStyle(AtlasColor.ink)
+                    .foregroundStyle(AtlasColor.text(theme))
                 PrototypeField(label: "JOURNEY NAME", value: "Iceland Ring Road")
                 PrototypeField(label: "DATE RANGE", value: "Sep 3 - Sep 12, 2026")
                 PrototypeField(label: "TRANSPORT MIX", value: "Flight + self-drive + walking")
@@ -488,7 +518,7 @@ struct AddJourneySheet: View {
                 } label: {
                     Text("Save journey draft")
                         .font(.system(size: 16, weight: .black))
-                        .foregroundStyle(AtlasColor.night)
+                        .foregroundStyle(AtlasColor.bg(theme))
                         .frame(maxWidth: .infinity, minHeight: 54)
                         .background(AtlasColor.gold, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                 }
@@ -500,6 +530,7 @@ struct AddJourneySheet: View {
 }
 
 struct PrototypeField: View {
+    @Environment(\.atlasTheme) private var theme
     let label: String
     let value: String
 
@@ -508,10 +539,10 @@ struct PrototypeField: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text(label)
                     .font(.system(size: 11, weight: .black))
-                    .foregroundStyle(AtlasColor.muted)
+                    .foregroundStyle(AtlasColor.subtext(theme))
                 Text(value)
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(AtlasColor.ink)
+                    .foregroundStyle(AtlasColor.text(theme))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }

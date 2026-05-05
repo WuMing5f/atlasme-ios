@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct AtlasHeader: View {
+    @Environment(\.atlasTheme) private var theme
     let title: String
     var trailing: AnyView?
 
@@ -17,7 +18,7 @@ struct AtlasHeader: View {
 
             Text(title)
                 .font(.system(size: 18, weight: .bold))
-                .foregroundStyle(AtlasColor.ink)
+                .foregroundStyle(AtlasColor.text(theme))
 
             Spacer()
 
@@ -27,6 +28,7 @@ struct AtlasHeader: View {
 }
 
 struct GlassCard<Content: View>: View {
+    @Environment(\.atlasTheme) private var theme
     let content: Content
 
     init(@ViewBuilder content: () -> Content) {
@@ -36,10 +38,10 @@ struct GlassCard<Content: View>: View {
     var body: some View {
         content
             .padding(14)
-            .background(.white.opacity(0.055), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .background(AtlasColor.card(theme), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .stroke(.white.opacity(0.12))
+                    .stroke(AtlasColor.cardStroke(theme))
             )
     }
 }
