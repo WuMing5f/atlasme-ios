@@ -4,6 +4,7 @@ struct HomeView: View {
     @Environment(\.copy) private var copy
     @Environment(\.atlasLanguage) private var language
     @Environment(\.atlasTheme) private var theme
+    @Binding var globeStyle: AtlasGlobeStyle
     @State private var showsGlobeStyle = false
 
     var body: some View {
@@ -20,7 +21,7 @@ struct HomeView: View {
                         Button {
                             showsGlobeStyle = true
                         } label: {
-                            Image(systemName: "slider.horizontal.3")
+                            Image(systemName: "bell")
                                 .foregroundStyle(AtlasColor.text(theme))
                         }
                     )
@@ -28,20 +29,21 @@ struct HomeView: View {
                 .padding(.top, 10)
 
                 Text(copy.homeTitle)
-                    .font(.atlasDisplay(35, weight: .semibold))
+                    .font(.atlasDisplay(31, weight: .semibold))
                     .foregroundStyle(AtlasColor.text(theme))
-                    .lineSpacing(-1)
-                    .padding(.top, 22)
+                    .lineSpacing(1)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 20)
 
                 Text(copy.homeSubtitle)
-                    .font(.atlasText(13, weight: .regular))
+                    .font(.atlasText(11.5, weight: .regular))
                     .foregroundStyle(AtlasColor.subtext(theme))
-                    .lineSpacing(4)
-                    .padding(.top, 12)
-
-                GlobeShowcase()
+                    .lineSpacing(3)
                     .padding(.top, 8)
-                    .padding(.bottom, 10)
+
+                GlobeShowcase(style: globeStyle)
+                    .padding(.top, 4)
+                    .padding(.bottom, 8)
 
                 HStack(spacing: 10) {
                     StatTile(value: "52", label: copy.countries)
@@ -92,7 +94,7 @@ struct HomeView: View {
             .padding(.horizontal, 24)
         }
         .sheet(isPresented: $showsGlobeStyle) {
-            GlobeStyleSheet()
+            GlobeStyleSheet(selectedStyle: $globeStyle)
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
@@ -370,6 +372,7 @@ struct ProfileView: View {
     @Environment(\.copy) private var copy
     @Environment(\.atlasLanguage) private var language
     @Environment(\.atlasTheme) private var theme
+    @Binding var globeStyle: AtlasGlobeStyle
     let toggleLanguage: () -> Void
     let toggleTheme: () -> Void
     @State private var showsGlobeStyle = false
@@ -492,7 +495,7 @@ struct ProfileView: View {
                                     Text(copy.globeStyle)
                                         .font(.atlasDisplay(17, weight: .semibold))
                                         .foregroundStyle(AtlasColor.text(theme))
-                                    Text("Night Atlas, Real Geography, Vintage, Anime, Terrain")
+                                    Text(globeStyle.title)
                                         .font(.atlasText(12))
                                         .foregroundStyle(AtlasColor.subtext(theme))
                                 }
@@ -508,7 +511,7 @@ struct ProfileView: View {
             }
         }
         .sheet(isPresented: $showsGlobeStyle) {
-            GlobeStyleSheet()
+            GlobeStyleSheet(selectedStyle: $globeStyle)
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
         }
@@ -600,65 +603,98 @@ struct FilterPill: View {
 struct GlobeStyleSheet: View {
     @Environment(\.copy) private var copy
     @Environment(\.atlasTheme) private var theme
-
-    private let styles: [(String, String, Color, Bool)] = [
-        ("Night Atlas", "City lights, golden arcs, private map.", Color(red: 0.18, green: 0.51, blue: 0.63), true),
-        ("Real Geography", "Satellite land, terrain, coastlines.", Color(red: 0.42, green: 0.56, blue: 0.70), false),
-        ("Vintage Explorer", "Old map paper, compass, ink routes.", Color(red: 0.84, green: 0.68, blue: 0.45), false),
-        ("Anime Journey", "Soft cities and playful routes.", Color(red: 0.96, green: 0.70, blue: 0.64), false),
-        ("Terrain Expedition", "Mountains, deserts, forests, roads.", Color(red: 0.65, green: 0.76, blue: 0.48), false)
-    ]
+    @Binding var selectedStyle: AtlasGlobeStyle
 
     var body: some View {
         ZStack {
             AtlasColor.bg(theme).ignoresSafeArea()
 
-            VStack(alignment: .leading, spacing: 14) {
-                Text(copy.globeStyle)
-                    .font(.atlasDisplay(25, weight: .semibold))
-                    .foregroundStyle(AtlasColor.text(theme))
-                Text("Choose how AtlasMe draws your world.")
-                    .font(.atlasText(13))
-                    .foregroundStyle(AtlasColor.subtext(theme))
-                    .padding(.bottom, 6)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text(copy.globeStyle)
+                        .font(.atlasDisplay(25, weight: .semibold))
+                        .foregroundStyle(AtlasColor.text(theme))
+                    Text("Choose how AtlasMe draws your world.")
+                        .font(.atlasText(13))
+                        .foregroundStyle(AtlasColor.subtext(theme))
 
-                ForEach(styles, id: \.0) { style in
                     GlassCard {
-                        HStack(spacing: 14) {
-                            ScenicThumb(colors: [style.2, AtlasColor.gold.opacity(0.55), AtlasColor.night])
-                                .frame(width: 84, height: 70)
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(style.0)
-                                    .font(.atlasDisplay(17, weight: .semibold))
+                        VStack(alignment: .leading, spacing: 10) {
+                            HStack {
+                                Text("Globe Atelier")
+                                    .font(.atlasDisplay(18, weight: .semibold))
                                     .foregroundStyle(AtlasColor.text(theme))
-                                Text(style.1)
-                                    .font(.atlasText(12))
-                                    .foregroundStyle(AtlasColor.subtext(theme))
-                                if style.0 != "Real Geography" {
-                                    Text("PREMIUM")
-                                        .font(.atlasText(9, weight: .black))
-                                        .foregroundStyle(AtlasColor.gold)
-                                        .padding(.horizontal, 7)
-                                        .padding(.vertical, 3)
-                                        .background(AtlasColor.gold.opacity(0.12), in: Capsule())
+                                Spacer()
+                                Text("5 skins")
+                                    .font(.atlasText(10, weight: .black))
+                                    .foregroundStyle(AtlasColor.gold)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(AtlasColor.gold.opacity(0.12), in: Capsule())
+                            }
+                            Text("AtlasMe's globe is now treated like a collectible surface system: core mode, signature mode, and premium skins.")
+                                .font(.atlasText(12))
+                                .foregroundStyle(AtlasColor.subtext(theme))
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+
+                    ForEach(AtlasGlobeStyle.allCases, id: \.rawValue) { style in
+                        Button {
+                            selectedStyle = style
+                        } label: {
+                            GlassCard {
+                                HStack(spacing: 14) {
+                                    GlobeModePreview(style: style)
+                                        .frame(width: 84, height: 70)
+                                    VStack(alignment: .leading, spacing: 5) {
+                                        HStack(spacing: 6) {
+                                            Text(style.title)
+                                                .font(.atlasDisplay(17, weight: .semibold))
+                                                .foregroundStyle(AtlasColor.text(theme))
+                                            Text(style.capsule.uppercased())
+                                                .font(.atlasText(8, weight: .black))
+                                                .foregroundStyle(AtlasColor.gold)
+                                                .padding(.horizontal, 6)
+                                                .padding(.vertical, 3)
+                                                .background(AtlasColor.gold.opacity(0.12), in: Capsule())
+                                        }
+                                        Text(style.subtitle)
+                                            .font(.atlasText(12))
+                                            .foregroundStyle(AtlasColor.subtext(theme))
+                                        Text(style.story)
+                                            .font(.atlasText(10.5, weight: .medium))
+                                            .foregroundStyle(AtlasColor.subtext(theme).opacity(0.88))
+                                            .lineLimit(2)
+                                        if style.isPremium {
+                                            Text("PREMIUM SKIN")
+                                                .font(.atlasText(9, weight: .black))
+                                                .foregroundStyle(AtlasColor.gold)
+                                                .padding(.horizontal, 7)
+                                                .padding(.vertical, 3)
+                                                .background(AtlasColor.gold.opacity(0.12), in: Capsule())
+                                        }
+                                    }
+                                    Spacer()
+                                    Image(systemName: selectedStyle == style ? "checkmark.circle.fill" : "circle")
+                                        .font(.system(size: 23, weight: .semibold))
+                                        .foregroundStyle(selectedStyle == style ? AtlasColor.gold : AtlasColor.subtext(theme).opacity(0.7))
                                 }
                             }
-                            Spacer()
-                            Image(systemName: style.3 ? "checkmark.circle.fill" : "circle")
-                                .font(.system(size: 23, weight: .semibold))
-                                .foregroundStyle(style.3 ? AtlasColor.gold : AtlasColor.subtext(theme).opacity(0.7))
+                        }
+                        .buttonStyle(.plain)
+                        .overlay {
+                            if selectedStyle == style {
+                                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                    .stroke(AtlasColor.gold.opacity(0.78), lineWidth: 1.5)
+                            }
                         }
                     }
-                    .overlay {
-                        if style.3 {
-                            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                .stroke(AtlasColor.gold.opacity(0.78), lineWidth: 1.5)
-                        }
-                    }
+
+                    Spacer(minLength: 32)
                 }
-                Spacer()
+                .padding(22)
             }
-            .padding(22)
         }
     }
 }

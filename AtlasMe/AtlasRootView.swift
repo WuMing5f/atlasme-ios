@@ -18,16 +18,68 @@ enum AtlasTheme {
     }
 }
 
+enum AtlasGlobeStyle: String, CaseIterable {
+    case nightAtlas
+    case realGeography
+    case vintageExplorer
+    case animeJourney
+    case terrainExpedition
+
+    var title: String {
+        switch self {
+        case .nightAtlas: return "Night Atlas"
+        case .realGeography: return "Real Geography"
+        case .vintageExplorer: return "Vintage Explorer"
+        case .animeJourney: return "Anime Journey"
+        case .terrainExpedition: return "Terrain Expedition"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .nightAtlas: return "City lights, golden arcs, private map."
+        case .realGeography: return "Satellite land, terrain, coastlines."
+        case .vintageExplorer: return "Old map paper, compass, ink routes."
+        case .animeJourney: return "Soft cities and playful routes."
+        case .terrainExpedition: return "Mountains, deserts, forests, roads."
+        }
+    }
+
+    var capsule: String {
+        switch self {
+        case .nightAtlas: return "Signature"
+        case .realGeography: return "Core"
+        case .vintageExplorer: return "Collector"
+        case .animeJourney: return "Seasonal"
+        case .terrainExpedition: return "Adventure"
+        }
+    }
+
+    var story: String {
+        switch self {
+        case .nightAtlas: return "Your private flight network over a sleeping world."
+        case .realGeography: return "A cleaner daylight globe for routes, coasts, and terrain."
+        case .vintageExplorer: return "Ink routes, paper seas, and expedition-room romance."
+        case .animeJourney: return "Dreamier skies, playful lights, and softer travel energy."
+        case .terrainExpedition: return "Topography-forward exploration for hikers, roads, and ridgelines."
+        }
+    }
+
+    var isPremium: Bool {
+        self != .realGeography
+    }
+}
+
 struct AtlasCopy {
     let language: AtlasLanguage
 
     var home: String { language == .chinese ? "首页" : "Home" }
-    var journeys: String { language == .chinese ? "旅程" : "Trips" }
+    var journeys: String { language == .chinese ? "旅程" : "Journeys" }
     var map: String { language == .chinese ? "地图" : "Map" }
     var explore: String { language == .chinese ? "探索" : "Explore" }
-    var me: String { language == .chinese ? "我的" : "Me" }
-    var homeTitle: String { language == .chinese ? "每一段路线，都成为你的世界。" : "Every route becomes your world." }
-    var homeSubtitle: String { language == .chinese ? "把足迹、路线、回忆和下一站，收藏在一张私人地图里。" : "Journeys, routes, memories, and next places in one private atlas." }
+    var me: String { language == .chinese ? "我的" : "Profile" }
+    var homeTitle: String { language == .chinese ? "每一段路线\n都成为你世界的一部分" : "Every route\nbecomes part of\nyour world" }
+    var homeSubtitle: String { language == .chinese ? "你的旅程、你的地图、你的回忆。" : "Your journeys. Your map. Your memories." }
     var countries: String { language == .chinese ? "国家" : "Countries" }
     var cities: String { language == .chinese ? "城市" : "Cities" }
     var kilometers: String { language == .chinese ? "公里" : "Kilometers" }
@@ -91,13 +143,14 @@ struct AtlasRootView: View {
     @State private var selectedTab: AtlasTab = .home
     @State private var language: AtlasLanguage = .english
     @State private var theme: AtlasTheme = .dark
+    @State private var globeStyle: AtlasGlobeStyle = .nightAtlas
 
     var body: some View {
         ZStack(alignment: .bottom) {
             Group {
                 switch selectedTab {
                 case .home:
-                    HomeView()
+                    HomeView(globeStyle: $globeStyle)
                 case .journeys:
                     JourneysView()
                 case .map:
@@ -106,6 +159,7 @@ struct AtlasRootView: View {
                     ExploreView()
                 case .me:
                     ProfileView(
+                        globeStyle: $globeStyle,
                         toggleLanguage: { language.toggle() },
                         toggleTheme: { theme.toggle() }
                     )
