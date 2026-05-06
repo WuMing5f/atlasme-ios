@@ -47,6 +47,12 @@ struct AtlasCopy {
     var viewAll: String { language == .chinese ? "查看全部" : "View all" }
     var handpicked: String { language == .chinese ? "为你精选的目的地" : "Handpicked places for you" }
     var currentSegment: String { language == .chinese ? "当前路段" : "Current segment" }
+    var route: String { language == .chinese ? "路线" : "Route" }
+    var travelDates: String { language == .chinese ? "旅行日期" : "Travel dates" }
+    var mood: String { language == .chinese ? "心情" : "Mood" }
+    var mapPreview: String { language == .chinese ? "地图预览" : "Map preview" }
+    var saveJourney: String { language == .chinese ? "保存旅程" : "Save journey" }
+    var earnedBadges: String { language == .chinese ? "已获得勋章" : "Badges earned" }
 }
 
 private struct AtlasLanguageKey: EnvironmentKey {
@@ -115,7 +121,7 @@ struct AtlasRootView: View {
                 .padding(.bottom, 12)
         }
         .background(theme == .dark ? AtlasColor.night : AtlasColor.paper)
-        .ignoresSafeArea()
+        .preferredColorScheme(theme == .dark ? .dark : .light)
     }
 }
 
@@ -137,7 +143,7 @@ enum AtlasColor {
         theme == .dark ? night : paper
     }
     static func bg2(_ theme: AtlasTheme) -> Color {
-        theme == .dark ? night2 : Color(red: 0.92, green: 0.88, blue: 0.81)
+        theme == .dark ? Color(red: 0.00, green: 0.12, blue: 0.15) : Color(red: 0.92, green: 0.88, blue: 0.81)
     }
     static func text(_ theme: AtlasTheme) -> Color {
         theme == .dark ? ink : paperInk
@@ -146,10 +152,10 @@ enum AtlasColor {
         theme == .dark ? muted : Color(red: 0.44, green: 0.40, blue: 0.35)
     }
     static func card(_ theme: AtlasTheme) -> Color {
-        theme == .dark ? Color.white.opacity(0.055) : Color.white.opacity(0.62)
+        theme == .dark ? Color(red: 0.07, green: 0.15, blue: 0.18).opacity(0.82) : Color.white.opacity(0.62)
     }
     static func cardStroke(_ theme: AtlasTheme) -> Color {
-        theme == .dark ? Color.white.opacity(0.12) : Color.black.opacity(0.06)
+        theme == .dark ? Color.white.opacity(0.14) : Color.black.opacity(0.06)
     }
 }
 
@@ -177,12 +183,20 @@ struct AtlasTabBar: View {
             tab(.me, icon: "person.fill", label: copy.me)
         }
         .frame(height: 68)
-        .background(theme == .dark ? Color.black.opacity(0.52) : Color.white.opacity(0.78), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .background(theme == .dark ? Color.black.opacity(0.74) : Color.white.opacity(0.78), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .background(
+            LinearGradient(
+                colors: [Color.white.opacity(theme == .dark ? 0.05 : 0.38), Color.clear],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            ),
+            in: RoundedRectangle(cornerRadius: 24, style: .continuous)
+        )
         .overlay(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .stroke(theme == .dark ? Color.white.opacity(0.12) : Color.black.opacity(0.06))
+                .stroke(theme == .dark ? Color.white.opacity(0.14) : Color.black.opacity(0.07))
         )
-        .shadow(color: theme == .dark ? Color.black.opacity(0.32) : Color.black.opacity(0.08), radius: 24, y: 12)
+        .shadow(color: theme == .dark ? Color.black.opacity(0.38) : Color.black.opacity(0.08), radius: 24, y: 12)
     }
 
     private func tab(_ tab: AtlasTab, icon: String, label: String) -> some View {
@@ -193,7 +207,7 @@ struct AtlasTabBar: View {
                 Image(systemName: icon)
                     .font(.system(size: 18, weight: .semibold))
                 Text(label)
-                    .font(.system(size: 10, weight: .bold))
+                    .font(.atlasText(10, weight: .black))
             }
             .foregroundStyle(selectedTab == tab ? AtlasColor.gold : AtlasColor.subtext(theme))
             .frame(maxWidth: .infinity)

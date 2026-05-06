@@ -10,6 +10,8 @@ struct HomeView: View {
         ZStack {
             LinearGradient(colors: [AtlasColor.bg(theme).opacity(0.9), AtlasColor.bg2(theme), AtlasColor.bg(theme)], startPoint: .top, endPoint: .bottom)
                 .ignoresSafeArea()
+            AtlasTexture()
+                .ignoresSafeArea()
 
             VStack(alignment: .leading, spacing: 0) {
                 AtlasHeader(
@@ -29,7 +31,7 @@ struct HomeView: View {
                     .font(.atlasDisplay(35, weight: .semibold))
                     .foregroundStyle(AtlasColor.text(theme))
                     .lineSpacing(-1)
-                    .padding(.top, 28)
+                    .padding(.top, 22)
 
                 Text(copy.homeSubtitle)
                     .font(.atlasText(13, weight: .regular))
@@ -37,8 +39,9 @@ struct HomeView: View {
                     .lineSpacing(4)
                     .padding(.top, 12)
 
-                GlobeCanvas()
-                    .padding(.vertical, 20)
+                GlobeShowcase()
+                    .padding(.top, 8)
+                    .padding(.bottom, 10)
 
                 HStack(spacing: 10) {
                     StatTile(value: "52", label: copy.countries)
@@ -140,7 +143,13 @@ struct JourneysView: View {
                         FilterPill(title: "Planned", active: false)
                     }
 
-                    ForEach(AtlasData.journeys) { journey in
+                    ForEach(Array(AtlasData.journeys.enumerated()), id: \.element.id) { index, journey in
+                        if index == 0 || index == 2 {
+                            Text(index == 0 ? "2024" : "2023")
+                                .font(.atlasText(12, weight: .black))
+                                .foregroundStyle(AtlasColor.gold)
+                                .padding(.top, index == 0 ? 2 : 8)
+                        }
                         HStack(alignment: .top, spacing: 12) {
                             VStack(spacing: 7) {
                                 Circle()
@@ -155,6 +164,10 @@ struct JourneysView: View {
                                 HStack(spacing: 14) {
                                     ScenicThumb(colors: journey.colors)
                                         .frame(width: 104, height: 106)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                                .stroke(AtlasColor.paleGold.opacity(0.18), lineWidth: 1)
+                                        )
                                     VStack(alignment: .leading, spacing: 7) {
                                         Text(journey.title(language: language))
                                             .font(.atlasDisplay(18, weight: .semibold))
@@ -178,6 +191,12 @@ struct JourneysView: View {
                                     Spacer()
                                 }
                             }
+                            .overlay(alignment: .topTrailing) {
+                                Image(systemName: "ellipsis")
+                                    .font(.system(size: 15, weight: .bold))
+                                    .foregroundStyle(AtlasColor.subtext(theme))
+                                    .padding(13)
+                            }
                         }
                     }
                 }
@@ -186,7 +205,7 @@ struct JourneysView: View {
         }
         .sheet(isPresented: $showsAddJourney) {
             AddJourneySheet()
-                .presentationDetents([.medium])
+                .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
         }
     }
@@ -251,38 +270,35 @@ struct ExploreView: View {
     @Environment(\.atlasTheme) private var theme
 
     var body: some View {
-        ZStack {
-            LinearGradient(colors: [AtlasColor.paper, Color(red: 0.98, green: 0.94, blue: 0.87)], startPoint: .top, endPoint: .bottom)
-                .ignoresSafeArea()
-
-            VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(copy.explore)
-                            .font(.atlasDisplay(32, weight: .semibold))
-                            .foregroundStyle(AtlasColor.paperInk)
-                        Text(copy.exploreSubtitle)
-                            .font(.atlasText(12))
-                            .foregroundStyle(AtlasColor.subtext(.light))
-                    }
-                    Spacer()
+        DarkScreen(
+            title: copy.exploreTitle,
+            subtitle: copy.exploreSubtitle,
+            trailing: AnyView(
+                Button {
+                } label: {
                     Image(systemName: "heart")
                         .font(.system(size: 17, weight: .bold))
-                        .foregroundStyle(AtlasColor.paperInk)
+                        .foregroundStyle(AtlasColor.text(theme))
                 }
-                .padding(.top, 18)
-
+                .buttonStyle(.plain)
+            )
+        ) {
+            VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass")
-                        .foregroundStyle(AtlasColor.subtext(.light))
+                        .foregroundStyle(AtlasColor.subtext(theme))
                     Text("Where to next?")
                         .font(.atlasText(13))
-                        .foregroundStyle(AtlasColor.subtext(.light))
+                        .foregroundStyle(AtlasColor.subtext(theme))
                     Spacer()
                 }
                 .frame(height: 44)
                 .padding(.horizontal, 14)
-                .background(Color.white.opacity(0.55), in: Capsule())
+                .background(theme == .dark ? Color.white.opacity(0.08) : Color.white.opacity(0.58), in: Capsule())
+                .overlay(
+                    Capsule()
+                        .stroke(AtlasColor.cardStroke(theme))
+                )
                 .padding(.top, 18)
 
                 HStack {
@@ -291,50 +307,61 @@ struct ExploreView: View {
                     FilterPill(title: "Near you", active: false)
                     FilterPill(title: "New", active: false)
                 }
-                .environment(\.atlasTheme, .light)
                 .padding(.top, 16)
 
                 Text(copy.handpicked)
                     .font(.atlasText(14, weight: .semibold))
-                    .foregroundStyle(AtlasColor.paperInk)
+                    .foregroundStyle(AtlasColor.text(theme))
                     .padding(.top, 18)
 
                 ScrollView {
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 14) {
                         ForEach(Array(AtlasData.places.enumerated()), id: \.element.id) { index, place in
                             VStack(alignment: .leading, spacing: 0) {
                                 ScenicThumb(colors: place.colors, label: index < 2 ? (index == 0 ? "Recommended" : "Trending") : nil)
-                                    .frame(height: 132)
+                                    .frame(height: 142)
                                 VStack(alignment: .leading, spacing: 6) {
                                     Text(place.name)
                                         .font(.atlasDisplay(19, weight: .semibold))
-                                        .foregroundStyle(AtlasColor.ink)
+                                        .foregroundStyle(AtlasColor.text(theme))
                                     Text(place.country)
                                         .font(.atlasText(11, weight: .bold))
                                         .foregroundStyle(AtlasColor.gold)
                                     Text(place.description(language: language))
                                         .font(.atlasText(11))
-                                        .foregroundStyle(Color.white.opacity(0.72))
+                                        .foregroundStyle(AtlasColor.subtext(theme))
                                         .lineLimit(3)
                                     HStack(spacing: 5) {
                                         ChipLabel(title: "Culture")
                                         ChipLabel(title: "History")
                                     }
                                 }
-                                .padding(12)
+                                .padding(.horizontal, 12)
+                                .padding(.top, 12)
+                                .padding(.bottom, 14)
                             }
-                            .background(AtlasColor.night2, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                            .background(
+                                LinearGradient(
+                                    colors: [
+                                        theme == .dark ? AtlasColor.card(theme).opacity(0.98) : Color.white.opacity(0.88),
+                                        theme == .dark ? AtlasColor.card(theme).opacity(0.72) : Color(red: 1.0, green: 0.96, blue: 0.89).opacity(0.88)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .stroke(Color.black.opacity(0.12))
+                                    .stroke(AtlasColor.cardStroke(theme))
                             )
+                            .shadow(color: theme == .dark ? Color.black.opacity(0.24) : Color.black.opacity(0.08), radius: 16, y: 10)
                         }
                     }
-                    .padding(.bottom, 112)
+                    .padding(.bottom, 210)
                 }
                 .padding(.top, 12)
             }
-            .padding(.horizontal, 24)
         }
     }
 }
@@ -346,6 +373,7 @@ struct ProfileView: View {
     let toggleLanguage: () -> Void
     let toggleTheme: () -> Void
     @State private var showsGlobeStyle = false
+    @State private var showsBadgeWall = false
 
     var body: some View {
         DarkScreen(title: copy.profileTitle, subtitle: copy.travelPersonality) {
@@ -390,11 +418,54 @@ struct ProfileView: View {
                     // Badge wall
                     GlassCard {
                         VStack(alignment: .leading, spacing: 14) {
-                            Text(copy.badgeWall)
-                                .font(.system(size: 20, weight: .bold))
-                                .foregroundStyle(AtlasColor.text(theme))
+                            HStack(alignment: .firstTextBaseline) {
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(copy.badgeWall)
+                                        .font(.atlasDisplay(21, weight: .semibold))
+                                        .foregroundStyle(AtlasColor.text(theme))
+                                    Text("37 \(copy.earnedBadges.lowercased())")
+                                        .font(.atlasText(11, weight: .semibold))
+                                        .foregroundStyle(AtlasColor.subtext(theme))
+                                }
+                                Spacer()
+                                Button {
+                                    showsBadgeWall = true
+                                } label: {
+                                    Text(copy.viewAll)
+                                        .font(.atlasText(11, weight: .bold))
+                                        .foregroundStyle(AtlasColor.gold)
+                                }
+                                .buttonStyle(.plain)
+                            }
+
+                            HStack(spacing: 14) {
+                                ZStack {
+                                    Circle()
+                                        .stroke(AtlasColor.gold.opacity(0.20), lineWidth: 7)
+                                    Circle()
+                                        .trim(from: 0, to: 0.72)
+                                        .stroke(AtlasColor.gold, style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                                        .rotationEffect(.degrees(-90))
+                                    Text("37")
+                                        .font(.atlasDisplay(18, weight: .semibold))
+                                        .foregroundStyle(AtlasColor.gold)
+                                }
+                                .frame(width: 52, height: 52)
+
+                                VStack(alignment: .leading, spacing: 5) {
+                                    Text("Rare badges 4/5")
+                                        .font(.atlasText(12, weight: .black))
+                                        .foregroundStyle(AtlasColor.text(theme))
+                                    ProgressView(value: 0.8)
+                                        .tint(AtlasColor.gold)
+                                    Text("Route mastery, night arrivals, and culture finds.")
+                                        .font(.atlasText(10, weight: .medium))
+                                        .foregroundStyle(AtlasColor.subtext(theme))
+                                }
+                            }
+
                             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 12) {
-                                ForEach(AtlasData.badges) { badge in
+                                ForEach(AtlasData.badges.prefix(4)) { badge in
                                     VStack(spacing: 6) {
                                         BadgeEmblem(badge: badge)
                                         Text(badge.title(language: language))
@@ -419,10 +490,10 @@ struct ProfileView: View {
                                     .foregroundStyle(AtlasColor.gold)
                                 VStack(alignment: .leading) {
                                     Text(copy.globeStyle)
-                                        .font(.system(size: 16, weight: .bold))
+                                        .font(.atlasDisplay(17, weight: .semibold))
                                         .foregroundStyle(AtlasColor.text(theme))
                                     Text("Night Atlas, Real Geography, Vintage, Anime, Terrain")
-                                        .font(.system(size: 12))
+                                        .font(.atlasText(12))
                                         .foregroundStyle(AtlasColor.subtext(theme))
                                 }
                                 Spacer()
@@ -438,7 +509,12 @@ struct ProfileView: View {
         }
         .sheet(isPresented: $showsGlobeStyle) {
             GlobeStyleSheet()
-                .presentationDetents([.medium, .large])
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showsBadgeWall) {
+            BadgeWallSheet()
+                .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
         }
     }
@@ -451,7 +527,7 @@ struct ProfileView: View {
                     .foregroundStyle(AtlasColor.gold)
                     .frame(width: 28)
                 Text(title)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.atlasText(15, weight: .semibold))
                     .foregroundStyle(AtlasColor.text(theme))
                 Spacer()
                 Image(systemName: "chevron.right")
@@ -482,6 +558,8 @@ struct DarkScreen<Content: View>: View {
     var body: some View {
         ZStack {
             LinearGradient(colors: [AtlasColor.bg(theme).opacity(0.9), AtlasColor.bg2(theme)], startPoint: .top, endPoint: .bottom)
+                .ignoresSafeArea()
+            AtlasTexture()
                 .ignoresSafeArea()
 
             VStack(alignment: .leading, spacing: 0) {
@@ -523,12 +601,12 @@ struct GlobeStyleSheet: View {
     @Environment(\.copy) private var copy
     @Environment(\.atlasTheme) private var theme
 
-    private let styles: [(String, String, Color)] = [
-        ("Night Atlas", "City lights, golden arcs, private map.", Color(red: 0.18, green: 0.51, blue: 0.63)),
-        ("Real Geography", "Satellite land, terrain, coastlines.", Color(red: 0.42, green: 0.56, blue: 0.70)),
-        ("Vintage Explorer", "Old map paper, compass, ink routes.", Color(red: 0.84, green: 0.68, blue: 0.45)),
-        ("Anime Journey", "Soft cities and playful routes.", Color(red: 0.96, green: 0.70, blue: 0.64)),
-        ("Terrain Expedition", "Mountains, deserts, forests, roads.", Color(red: 0.65, green: 0.76, blue: 0.48))
+    private let styles: [(String, String, Color, Bool)] = [
+        ("Night Atlas", "City lights, golden arcs, private map.", Color(red: 0.18, green: 0.51, blue: 0.63), true),
+        ("Real Geography", "Satellite land, terrain, coastlines.", Color(red: 0.42, green: 0.56, blue: 0.70), false),
+        ("Vintage Explorer", "Old map paper, compass, ink routes.", Color(red: 0.84, green: 0.68, blue: 0.45), false),
+        ("Anime Journey", "Soft cities and playful routes.", Color(red: 0.96, green: 0.70, blue: 0.64), false),
+        ("Terrain Expedition", "Mountains, deserts, forests, roads.", Color(red: 0.65, green: 0.76, blue: 0.48), false)
     ]
 
     var body: some View {
@@ -539,14 +617,16 @@ struct GlobeStyleSheet: View {
                 Text(copy.globeStyle)
                     .font(.atlasDisplay(25, weight: .semibold))
                     .foregroundStyle(AtlasColor.text(theme))
-                    .padding(.bottom, 4)
+                Text("Choose how AtlasMe draws your world.")
+                    .font(.atlasText(13))
+                    .foregroundStyle(AtlasColor.subtext(theme))
+                    .padding(.bottom, 6)
 
                 ForEach(styles, id: \.0) { style in
                     GlassCard {
                         HStack(spacing: 14) {
-                            Circle()
-                                .fill(LinearGradient(colors: [style.2.opacity(1.15), AtlasColor.night], startPoint: .topLeading, endPoint: .bottomTrailing))
-                                .frame(width: 52, height: 52)
+                            ScenicThumb(colors: [style.2, AtlasColor.gold.opacity(0.55), AtlasColor.night])
+                                .frame(width: 84, height: 70)
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(style.0)
                                     .font(.atlasDisplay(17, weight: .semibold))
@@ -554,12 +634,25 @@ struct GlobeStyleSheet: View {
                                 Text(style.1)
                                     .font(.atlasText(12))
                                     .foregroundStyle(AtlasColor.subtext(theme))
+                                if style.0 != "Real Geography" {
+                                    Text("PREMIUM")
+                                        .font(.atlasText(9, weight: .black))
+                                        .foregroundStyle(AtlasColor.gold)
+                                        .padding(.horizontal, 7)
+                                        .padding(.vertical, 3)
+                                        .background(AtlasColor.gold.opacity(0.12), in: Capsule())
+                                }
                             }
                             Spacer()
-                            if style.0 == "Night Atlas" {
-                                Image(systemName: "checkmark")
-                                    .foregroundStyle(AtlasColor.gold)
-                            }
+                            Image(systemName: style.3 ? "checkmark.circle.fill" : "circle")
+                                .font(.system(size: 23, weight: .semibold))
+                                .foregroundStyle(style.3 ? AtlasColor.gold : AtlasColor.subtext(theme).opacity(0.7))
+                        }
+                    }
+                    .overlay {
+                        if style.3 {
+                            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                .stroke(AtlasColor.gold.opacity(0.78), lineWidth: 1.5)
                         }
                     }
                 }
@@ -576,26 +669,81 @@ struct AddJourneySheet: View {
 
     var body: some View {
         ZStack {
-            AtlasColor.bg(theme).ignoresSafeArea()
-            VStack(alignment: .leading, spacing: 14) {
-                Text(copy.addJourney)
-                    .font(.atlasDisplay(25, weight: .semibold))
-                    .foregroundStyle(AtlasColor.text(theme))
-                PrototypeField(label: "JOURNEY NAME", value: "Iceland Ring Road")
-                PrototypeField(label: "DATE RANGE", value: "Sep 3 - Sep 12, 2026")
-                PrototypeField(label: "TRANSPORT MIX", value: "Flight + self-drive + walking")
-                Button {
-                } label: {
-                    Text("Save journey draft")
-                        .font(.system(size: 16, weight: .black))
-                        .foregroundStyle(AtlasColor.bg(theme))
-                        .frame(maxWidth: .infinity, minHeight: 54)
-                        .background(AtlasColor.gold, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            LinearGradient(colors: [AtlasColor.bg(theme), AtlasColor.bg2(theme)], startPoint: .top, endPoint: .bottom)
+                .ignoresSafeArea()
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    Text(copy.addJourney)
+                        .font(.atlasDisplay(26, weight: .semibold))
+                        .foregroundStyle(AtlasColor.text(theme))
+
+                    sectionTitle(copy.route)
+                    GlassCard {
+                        VStack(spacing: 0) {
+                            RouteStopRow(name: "Lima, Peru", icon: "airplane", color: AtlasColor.aqua, isLast: false)
+                            RouteStopRow(name: "Cusco, Peru", icon: "tram.fill", color: AtlasColor.gold, isLast: false)
+                            RouteStopRow(name: "Machu Picchu", icon: "figure.walk", color: AtlasColor.green, isLast: false)
+                            RouteStopRow(name: "Puno, Peru", icon: "car.fill", color: AtlasColor.coral, isLast: true)
+                            HStack {
+                                Image(systemName: "plus")
+                                    .font(.system(size: 12, weight: .bold))
+                                Text("Add stop")
+                                    .font(.atlasText(13, weight: .semibold))
+                            }
+                            .foregroundStyle(AtlasColor.aqua)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.top, 12)
+                        }
+                    }
+
+                    sectionTitle(copy.travelDates)
+                    GlassCard {
+                        HStack {
+                            Text("May 10, 2024")
+                            Spacer()
+                            Image(systemName: "arrow.right")
+                                .foregroundStyle(AtlasColor.gold)
+                            Spacer()
+                            Text("May 24, 2024")
+                        }
+                        .font(.atlasText(14, weight: .semibold))
+                        .foregroundStyle(AtlasColor.text(theme))
+                    }
+
+                    sectionTitle(copy.mood)
+                    HStack {
+                        MoodChip(title: "Inspiring", active: true)
+                        MoodChip(title: "Relaxing", active: false)
+                        MoodChip(title: "Adventurous", active: false)
+                    }
+
+                    sectionTitle(copy.mapPreview)
+                    RouteMapCanvas()
+                        .frame(height: 150)
+
+                    Button {
+                    } label: {
+                        Text(copy.saveJourney)
+                            .font(.atlasText(16, weight: .black))
+                            .foregroundStyle(AtlasColor.bg(theme))
+                            .frame(maxWidth: .infinity, minHeight: 54)
+                            .background(
+                                LinearGradient(colors: [AtlasColor.aqua, AtlasColor.gold], startPoint: .leading, endPoint: .trailing),
+                                in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            )
+                    }
+                    .padding(.top, 6)
                 }
-                Spacer()
+                .padding(22)
             }
-            .padding(22)
         }
+    }
+
+    private func sectionTitle(_ title: String) -> some View {
+        Text(title)
+            .font(.atlasText(13, weight: .black))
+            .foregroundStyle(AtlasColor.text(theme))
     }
 }
 
@@ -608,13 +756,158 @@ struct PrototypeField: View {
         GlassCard {
             VStack(alignment: .leading, spacing: 8) {
                 Text(label)
-                    .font(.system(size: 11, weight: .black))
+                    .font(.atlasText(11, weight: .black))
                     .foregroundStyle(AtlasColor.subtext(theme))
                 Text(value)
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.atlasText(16, weight: .bold))
                     .foregroundStyle(AtlasColor.text(theme))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+}
+
+struct RouteStopRow: View {
+    @Environment(\.atlasTheme) private var theme
+    let name: String
+    let icon: String
+    let color: Color
+    let isLast: Bool
+
+    var body: some View {
+        HStack(spacing: 12) {
+            VStack(spacing: 0) {
+                Circle()
+                    .stroke(color.opacity(0.85), lineWidth: 1.5)
+                    .frame(width: 9, height: 9)
+                if !isLast {
+                    Rectangle()
+                        .fill(AtlasColor.cardStroke(theme))
+                        .frame(width: 1, height: 27)
+                }
+            }
+            .frame(width: 12)
+
+            Text(name)
+                .font(.atlasText(13, weight: .semibold))
+                .foregroundStyle(AtlasColor.text(theme))
+            Spacer()
+            TransportIcon(name: icon, color: color)
+            Image(systemName: "line.3.horizontal")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(AtlasColor.subtext(theme))
+        }
+        .padding(.vertical, 3)
+    }
+}
+
+struct MoodChip: View {
+    @Environment(\.atlasTheme) private var theme
+    let title: String
+    let active: Bool
+
+    var body: some View {
+        Text(title)
+            .font(.atlasText(12, weight: .bold))
+            .foregroundStyle(active ? AtlasColor.gold : AtlasColor.subtext(theme))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(active ? AtlasColor.gold.opacity(0.15) : AtlasColor.card(theme), in: Capsule())
+            .overlay(
+                Capsule()
+                    .stroke(active ? AtlasColor.gold.opacity(0.7) : AtlasColor.cardStroke(theme))
+            )
+    }
+}
+
+struct BadgeWallSheet: View {
+    @Environment(\.copy) private var copy
+    @Environment(\.atlasLanguage) private var language
+    @Environment(\.atlasTheme) private var theme
+
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 12), count: 4)
+
+    var body: some View {
+        ZStack {
+            AtlasColor.bg(theme).ignoresSafeArea()
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    Text(copy.badgeWall)
+                        .font(.atlasDisplay(26, weight: .semibold))
+                        .foregroundStyle(AtlasColor.text(theme))
+
+                    GlassCard {
+                        HStack {
+                            ZStack {
+                                Circle()
+                                    .stroke(AtlasColor.gold.opacity(0.25), lineWidth: 10)
+                                    .frame(width: 76, height: 76)
+                                Circle()
+                                    .trim(from: 0, to: 0.72)
+                                    .stroke(AtlasColor.gold, style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                                    .frame(width: 76, height: 76)
+                                    .rotationEffect(.degrees(-90))
+                                VStack(spacing: 0) {
+                                    Text("37")
+                                        .font(.atlasDisplay(26, weight: .semibold))
+                                        .foregroundStyle(AtlasColor.gold)
+                                    Text("badges")
+                                        .font(.atlasText(9, weight: .bold))
+                                        .foregroundStyle(AtlasColor.subtext(theme))
+                                }
+                            }
+                            Spacer()
+                            badgeStat("24", "Common")
+                            badgeStat("8", "Rare")
+                            badgeStat("4", "Epic")
+                            badgeStat("1", "Legendary")
+                        }
+                    }
+
+                    badgeSection("Rare Badges", badges: Array(AtlasData.badges.prefix(4)))
+                    badgeSection("Route Mastery", badges: Array(AtlasData.badges.dropFirst(2).prefix(4)))
+                    badgeSection("Hidden Achievements", badges: Array(AtlasData.badges.suffix(4)))
+                }
+                .padding(22)
+            }
+        }
+    }
+
+    private func badgeStat(_ value: String, _ label: String) -> some View {
+        VStack(spacing: 4) {
+            Text(value)
+                .font(.atlasDisplay(19, weight: .semibold))
+                .foregroundStyle(AtlasColor.text(theme))
+            Text(label)
+                .font(.atlasText(9, weight: .bold))
+                .foregroundStyle(AtlasColor.subtext(theme))
+        }
+    }
+
+    private func badgeSection(_ title: String, badges: [BadgeItem]) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text(title)
+                    .font(.atlasDisplay(18, weight: .semibold))
+                    .foregroundStyle(AtlasColor.gold)
+                Spacer()
+                Text("\(badges.filter { !$0.locked }.count)/\(badges.count)")
+                    .font(.atlasText(12, weight: .semibold))
+                    .foregroundStyle(AtlasColor.subtext(theme))
+            }
+            LazyVGrid(columns: columns, spacing: 14) {
+                ForEach(badges) { badge in
+                    VStack(spacing: 7) {
+                        BadgeEmblem(badge: badge)
+                        Text(badge.title(language: language))
+                            .font(.atlasText(9, weight: .bold))
+                            .foregroundStyle(AtlasColor.text(theme))
+                            .multilineTextAlignment(.center)
+                            .lineLimit(2)
+                    }
+                }
+            }
         }
     }
 }
