@@ -215,13 +215,13 @@ struct GlobeShowcase: View {
     @Environment(\.atlasTheme) private var theme
     let style: AtlasGlobeStyle
     @State private var autoRotationAnchor = Date()
-    @State private var anchorLongitude: Double = -18
+    @State private var anchorLongitude: Double = 8
     @GestureState private var dragTranslation: CGSize = .zero
 
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: false)) { timeline in
             let elapsed = timeline.date.timeIntervalSince(autoRotationAnchor)
-            let autoRotation = elapsed * 1.45
+            let autoRotation = elapsed * 0.92
             let displayedLongitude = anchorLongitude + autoRotation + Double(dragTranslation.width) * 0.22
 
             ZStack {
@@ -240,7 +240,7 @@ struct GlobeShowcase: View {
                     )
 
                 GlobeCanvas(style: style, longitudeOffset: displayedLongitude)
-                    .frame(width: 292, height: 292)
+                    .frame(width: 306, height: 306)
                     .shadow(color: AtlasColor.aqua.opacity(theme == .dark ? 0.22 : 0.08), radius: 30, y: 10)
                     .contentShape(Circle())
                     .gesture(
@@ -249,7 +249,7 @@ struct GlobeShowcase: View {
                                 state = value.translation
                             }
                             .onEnded { value in
-                                let rotationAtRelease = anchorLongitude + timeline.date.timeIntervalSince(autoRotationAnchor) * 1.45
+                                let rotationAtRelease = anchorLongitude + timeline.date.timeIntervalSince(autoRotationAnchor) * 0.92
                                 let momentum = value.translation.width + (value.predictedEndTranslation.width - value.translation.width) * 0.35
                                 anchorLongitude = rotationAtRelease + Double(momentum) * 0.22
                                 autoRotationAnchor = timeline.date
@@ -257,35 +257,27 @@ struct GlobeShowcase: View {
                     )
 
                 VStack {
-                    HStack(spacing: 10) {
+                    HStack(spacing: 8) {
                         Image(systemName: "globe.europe.africa.fill")
-                            .font(.system(size: 10, weight: .bold))
+                            .font(.system(size: 9, weight: .bold))
                             .foregroundStyle(AtlasColor.gold)
-                        VStack(alignment: .leading, spacing: 1) {
-                            HStack(spacing: 6) {
-                                Text(style.title)
-                                    .font(.atlasText(9.5, weight: .black))
-                                    .foregroundStyle(AtlasColor.text(theme))
-                                Text(style.capsule.uppercased())
-                                    .font(.atlasText(7.5, weight: .black))
-                                    .foregroundStyle(AtlasColor.gold)
-                                    .padding(.horizontal, 5)
-                                    .padding(.vertical, 2.5)
-                                    .background(AtlasColor.gold.opacity(0.12), in: Capsule())
-                            }
-                            Text(style.story)
-                                .font(.atlasText(8, weight: .semibold))
-                                .foregroundStyle(AtlasColor.subtext(theme))
-                                .lineLimit(1)
-                        }
-                        Spacer()
+                        Text(style.title)
+                            .font(.atlasText(9.5, weight: .black))
+                            .foregroundStyle(AtlasColor.text(theme))
+                        Text(style.capsule.uppercased())
+                            .font(.atlasText(7.2, weight: .black))
+                            .foregroundStyle(AtlasColor.gold)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2.5)
+                            .background(AtlasColor.gold.opacity(0.12), in: Capsule())
+                        Spacer(minLength: 0)
                     }
                     .padding(.horizontal, 10)
-                    .padding(.vertical, 7)
-                    .background(AtlasColor.card(theme).opacity(theme == .dark ? 0.94 : 0.90), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(AtlasColor.cardStroke(theme)))
-                    .padding(.horizontal, 28)
-                    .padding(.top, 10)
+                    .padding(.vertical, 6)
+                    .background(AtlasColor.card(theme).opacity(theme == .dark ? 0.90 : 0.88), in: Capsule())
+                    .overlay(Capsule().stroke(AtlasColor.cardStroke(theme)))
+                    .padding(.leading, 26)
+                    .padding(.top, 4)
 
                     Spacer()
 
@@ -420,6 +412,14 @@ struct GlobeCanvas: View {
                 endRadius: projection.radius * 1.16
             ))
 
+            if style == .nightAtlas {
+                context.fill(sphere, with: .linearGradient(
+                    Gradient(colors: [Color.white.opacity(0.10), Color.clear, Color.black.opacity(0.16)]),
+                    startPoint: CGPoint(x: projection.center.x - projection.radius * 0.86, y: projection.center.y - projection.radius * 0.34),
+                    endPoint: CGPoint(x: projection.center.x + projection.radius * 0.78, y: projection.center.y + projection.radius * 0.40)
+                ))
+            }
+
             drawSurfaceTexture(in: clippedContext, projection: projection, sphereRect: sphereRect)
 
             context.fill(sphere, with: .radialGradient(
@@ -488,6 +488,9 @@ struct GlobeCanvas: View {
 
             context.stroke(Path(ellipseIn: sphereRect.insetBy(dx: 1.5, dy: 1.5)), with: .color(Color.white.opacity(0.16)), lineWidth: 1.15)
             context.stroke(Path(ellipseIn: sphereRect.insetBy(dx: 7, dy: 7)), with: .color(palette.atmosphere.opacity(0.10)), lineWidth: 0.8)
+            if style == .nightAtlas {
+                context.stroke(Path(ellipseIn: sphereRect.insetBy(dx: -2, dy: -2)), with: .color(AtlasColor.aqua.opacity(0.06)), lineWidth: 6.5)
+            }
         }
         .aspectRatio(1, contentMode: .fit)
     }
@@ -827,7 +830,7 @@ struct GlobeCanvas: View {
             )
         )
 
-        let nodeSize = max(4.6, 5.8 * projected.scale)
+        let nodeSize = max(3.8, 4.9 * projected.scale)
         let nodeRect = CGRect(
             x: projected.point.x - nodeSize / 2,
             y: projected.point.y - nodeSize / 2,
@@ -951,10 +954,10 @@ private func globePalette(for style: AtlasGlobeStyle) -> GlobePalette {
             cityStrokeOpacity: 1.0,
             frontRouteOpacity: 0.90,
             frontRouteGlowOpacity: 0.12,
-            frontRouteWidth: 1.25,
+            frontRouteWidth: 1.05,
             backRouteOpacity: 0.08,
             backRouteGlowOpacity: 0.05,
-            backRouteWidth: 1.65
+            backRouteWidth: 1.45
         )
     case .realGeography:
         return GlobePalette(
@@ -1215,10 +1218,10 @@ private struct AtlasGlobeScene {
         self.cityLights = AtlasGlobeScene.lightBlobs(for: style)
         self.cities = [reykjavikLabeled, paris, dubai, hoiAn, cusco]
         self.routes = [
-            GlobeRoute(from: cusco, to: paris, color: style == .vintageExplorer ? Color(red: 0.28, green: 0.14, blue: 0.06) : AtlasColor.gold, altitude: 0.085),
-            GlobeRoute(from: paris, to: hoiAn, color: style == .animeJourney ? Color(red: 0.99, green: 0.73, blue: 0.70) : AtlasColor.gold, altitude: 0.05),
-            GlobeRoute(from: dubai, to: hoiAn, color: style == .terrainExpedition ? AtlasColor.green : AtlasColor.aqua, altitude: 0.028),
-            GlobeRoute(from: reykjavikLabeled, to: paris, color: style == .realGeography ? Color.white.opacity(0.82) : AtlasColor.paleGold, altitude: 0.024)
+            GlobeRoute(from: cusco, to: paris, color: style == .vintageExplorer ? Color(red: 0.28, green: 0.14, blue: 0.06) : AtlasColor.gold, altitude: style == .nightAtlas ? 0.062 : 0.085),
+            GlobeRoute(from: paris, to: hoiAn, color: style == .animeJourney ? Color(red: 0.99, green: 0.73, blue: 0.70) : AtlasColor.gold, altitude: style == .nightAtlas ? 0.038 : 0.05),
+            GlobeRoute(from: dubai, to: hoiAn, color: style == .terrainExpedition ? AtlasColor.green : AtlasColor.aqua, altitude: style == .nightAtlas ? 0.020 : 0.028),
+            GlobeRoute(from: reykjavikLabeled, to: paris, color: style == .realGeography ? Color.white.opacity(0.82) : AtlasColor.paleGold, altitude: style == .nightAtlas ? 0.016 : 0.024)
         ]
     }
 
@@ -1298,28 +1301,61 @@ private struct AtlasGlobeScene {
             GlobePolygon(
                 points: [
                     .init(latitude: 71, longitude: -10), .init(latitude: 65, longitude: 12),
+                    .init(latitude: 58, longitude: 16), .init(latitude: 61, longitude: 26),
                     .init(latitude: 58, longitude: 28), .init(latitude: 54, longitude: 44),
                     .init(latitude: 58, longitude: 64), .init(latitude: 56, longitude: 90),
                     .init(latitude: 50, longitude: 113), .init(latitude: 42, longitude: 132),
-                    .init(latitude: 32, longitude: 124), .init(latitude: 24, longitude: 118),
+                    .init(latitude: 34, longitude: 139), .init(latitude: 32, longitude: 124), .init(latitude: 24, longitude: 118),
                     .init(latitude: 18, longitude: 108), .init(latitude: 10, longitude: 104),
                     .init(latitude: 4, longitude: 97), .init(latitude: 5, longitude: 83),
-                    .init(latitude: 12, longitude: 73), .init(latitude: 24, longitude: 66),
+                    .init(latitude: 12, longitude: 73), .init(latitude: 8, longitude: 77),
+                    .init(latitude: 24, longitude: 66), .init(latitude: 28, longitude: 57),
+                    .init(latitude: 24, longitude: 52), .init(latitude: 14, longitude: 50),
+                    .init(latitude: 12, longitude: 44), .init(latitude: 18, longitude: 41),
                     .init(latitude: 32, longitude: 47), .init(latitude: 36, longitude: 32),
-                    .init(latitude: 31, longitude: 19), .init(latitude: 26, longitude: 11),
+                    .init(latitude: 42, longitude: 28), .init(latitude: 44, longitude: 16),
+                    .init(latitude: 38, longitude: 8), .init(latitude: 43, longitude: 0),
+                    .init(latitude: 52, longitude: -6),
+                    .init(latitude: 58, longitude: -7),
+                    .init(latitude: 60, longitude: -12),
+                    .init(latitude: 52, longitude: -14), .init(latitude: 48, longitude: -10),
+                    .init(latitude: 43, longitude: -6),
+                    .init(latitude: 35, longitude: -10),
                     .init(latitude: 18, longitude: 2), .init(latitude: 6, longitude: -5),
                     .init(latitude: -8, longitude: 8), .init(latitude: -20, longitude: 17),
-                    .init(latitude: -32, longitude: 19), .init(latitude: -35, longitude: 28),
+                    .init(latitude: -32, longitude: 19), .init(latitude: -34, longitude: 25), .init(latitude: -35, longitude: 28),
                     .init(latitude: -27, longitude: 39), .init(latitude: -10, longitude: 50),
                     .init(latitude: 8, longitude: 44), .init(latitude: 20, longitude: 36),
-                    .init(latitude: 28, longitude: 28), .init(latitude: 35, longitude: 20),
-                    .init(latitude: 43, longitude: 6), .init(latitude: 52, longitude: -6),
-                    .init(latitude: 60, longitude: -12)
+                    .init(latitude: 28, longitude: 28), .init(latitude: 35, longitude: 20)
                 ],
                 color: afroEurasiaColor,
                 stroke: stroke,
                 opacity: style == .nightAtlas ? 0.82 : 0.90,
                 lineWidth: style == .nightAtlas ? 0.6 : 0.75
+            ),
+            GlobePolygon(
+                points: [
+                    .init(latitude: 58, longitude: -9), .init(latitude: 54, longitude: -3),
+                    .init(latitude: 51, longitude: 2), .init(latitude: 46, longitude: 8),
+                    .init(latitude: 44, longitude: 14), .init(latitude: 41, longitude: 18),
+                    .init(latitude: 43, longitude: 24), .init(latitude: 47, longitude: 19),
+                    .init(latitude: 51, longitude: 15), .init(latitude: 55, longitude: 8)
+                ],
+                color: afroEurasiaColor.opacity(style == .nightAtlas ? 0.92 : 1.0),
+                stroke: stroke,
+                opacity: style == .nightAtlas ? 0.48 : 0.58,
+                lineWidth: style == .nightAtlas ? 0.45 : 0.6
+            ),
+            GlobePolygon(
+                points: [
+                    .init(latitude: -13, longitude: 48), .init(latitude: -16, longitude: 50),
+                    .init(latitude: -20, longitude: 49), .init(latitude: -24, longitude: 47),
+                    .init(latitude: -22, longitude: 45), .init(latitude: -17, longitude: 45)
+                ],
+                color: afroEurasiaColor,
+                stroke: stroke,
+                opacity: style == .nightAtlas ? 0.42 : 0.56,
+                lineWidth: style == .nightAtlas ? 0.4 : 0.55
             ),
             GlobePolygon(
                 points: [
@@ -1471,12 +1507,14 @@ private struct AtlasGlobeScene {
                 let distance = pow((lat - centerLat) / latRadius, 2) + pow((lon - centerLon) / lonRadius, 2)
                 guard distance < 1 else { continue }
 
-                let jitter = sin(Double(row * 13 + col * 7)) * 0.55
+                let jitterA = sin(Double(row * 13 + col * 7)) * 0.72
+                let jitterB = cos(Double(row * 5 - col * 11)) * 0.38
+                let stretch = 1 + sin(Double(col * 9 + row * 3)) * 0.06
                 points.append(
                     GlobeLight(
-                        latitude: lat + jitter,
-                        longitude: lon - jitter * 0.7,
-                        size: size - CGFloat(distance) * 1.2,
+                        latitude: lat + jitterA + jitterB * 0.35,
+                        longitude: lon - jitterA * 0.6 + jitterB * stretch,
+                        size: size - CGFloat(distance) * 1.35 + CGFloat(jitterB) * 0.08,
                         color: color
                     )
                 )
