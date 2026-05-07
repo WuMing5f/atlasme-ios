@@ -211,87 +211,212 @@ struct ScenicThumb: View {
     }
 }
 
+struct LightweightGlobeCanvas: View {
+    let style: AtlasGlobeStyle
+
+    var body: some View {
+        Canvas { context, size in
+            let center = CGPoint(x: size.width / 2, y: size.height / 2)
+            let radius = min(size.width, size.height) * 0.44
+            let globeRect = CGRect(x: center.x - radius, y: center.y - radius, width: radius * 2, height: radius * 2)
+            let sphere = Path(ellipseIn: globeRect)
+            let palette = globePalette(for: style)
+
+            context.fill(Path(ellipseIn: globeRect.insetBy(dx: -20, dy: -20)), with: .radialGradient(
+                Gradient(colors: [AtlasColor.aqua.opacity(0.20), Color.clear]),
+                center: center,
+                startRadius: radius * 0.68,
+                endRadius: radius * 1.30
+            ))
+
+            context.fill(sphere, with: .radialGradient(
+                Gradient(colors: palette.oceanColors + [Color.black.opacity(style == .nightAtlas ? 0.94 : 0.28)]),
+                center: CGPoint(x: center.x - radius * 0.28, y: center.y - radius * 0.22),
+                startRadius: 0,
+                endRadius: radius * 1.08
+            ))
+
+            drawLand(context: context, center: center, radius: radius, points: [
+                CGPoint(x: -0.72, y: -0.24), CGPoint(x: -0.42, y: -0.56), CGPoint(x: -0.12, y: -0.28),
+                CGPoint(x: -0.20, y: 0.16), CGPoint(x: -0.48, y: 0.45), CGPoint(x: -0.76, y: 0.15)
+            ], color: landColor(0).opacity(0.72))
+            drawLand(context: context, center: center, radius: radius, points: [
+                CGPoint(x: 0.02, y: -0.58), CGPoint(x: 0.54, y: -0.48), CGPoint(x: 0.80, y: -0.10),
+                CGPoint(x: 0.50, y: 0.15), CGPoint(x: 0.08, y: 0.02)
+            ], color: landColor(1).opacity(0.76))
+            drawLand(context: context, center: center, radius: radius, points: [
+                CGPoint(x: 0.02, y: 0.18), CGPoint(x: 0.38, y: 0.22), CGPoint(x: 0.30, y: 0.64),
+                CGPoint(x: 0.10, y: 0.76), CGPoint(x: -0.06, y: 0.48)
+            ], color: landColor(2).opacity(0.70))
+
+            for index in 0..<44 {
+                let angle = CGFloat(index) * .pi * 2 / 44
+                let distance = radius * (0.18 + CGFloat(index % 7) * 0.095)
+                let point = CGPoint(x: center.x + cos(angle) * distance, y: center.y + sin(angle) * distance * 0.64)
+                context.fill(Path(ellipseIn: CGRect(x: point.x - 1.15, y: point.y - 1.15, width: 2.3, height: 2.3)), with: .color(AtlasColor.paleGold.opacity(0.30)))
+            }
+
+            let cities: [(String, CGPoint)] = [
+                ("Cusco", CGPoint(x: -0.56, y: 0.52)),
+                ("Granada", CGPoint(x: 0.05, y: -0.08)),
+                ("Paris", CGPoint(x: 0.22, y: -0.36)),
+                ("Hoi An", CGPoint(x: 0.70, y: 0.20)),
+                ("Dubai", CGPoint(x: 0.52, y: -0.02))
+            ]
+
+            drawRoute(context: context, center: center, radius: radius, from: cities[0].1, to: cities[2].1, color: AtlasColor.gold, lift: -0.32)
+            drawRoute(context: context, center: center, radius: radius, from: cities[1].1, to: cities[4].1, color: AtlasColor.paleGold, lift: -0.22)
+            drawRoute(context: context, center: center, radius: radius, from: cities[1].1, to: cities[3].1, color: AtlasColor.aqua, lift: 0.12)
+
+            context.stroke(sphere, with: .color(Color.white.opacity(0.16)), lineWidth: 1.2)
+            context.fill(sphere, with: .linearGradient(
+                Gradient(colors: [Color.white.opacity(0.11), Color.clear, Color.black.opacity(0.28)]),
+                startPoint: CGPoint(x: globeRect.minX, y: globeRect.minY),
+                endPoint: CGPoint(x: globeRect.maxX, y: globeRect.maxY)
+            ))
+
+            for city in cities {
+                let point = CGPoint(x: center.x + city.1.x * radius, y: center.y + city.1.y * radius)
+                context.fill(Path(ellipseIn: CGRect(x: point.x - 10, y: point.y - 10, width: 20, height: 20)), with: .radialGradient(
+                    Gradient(colors: [AtlasColor.gold.opacity(0.36), Color.clear]),
+                    center: point,
+                    startRadius: 0,
+                    endRadius: 10
+                ))
+                context.fill(Path(ellipseIn: CGRect(x: point.x - 3.2, y: point.y - 3.2, width: 6.4, height: 6.4)), with: .color(AtlasColor.paleGold))
+                context.draw(
+                    Text(city.0)
+                        .font(.atlasText(8.5, weight: .black))
+                        .foregroundStyle(AtlasColor.ink.opacity(0.84)),
+                    at: CGPoint(x: point.x + 14, y: point.y - 1),
+                    anchor: .leading
+                )
+            }
+        }
+        .aspectRatio(1, contentMode: .fit)
+    }
+
+    private func drawLand(context: GraphicsContext, center: CGPoint, radius: CGFloat, points: [CGPoint], color: Color) {
+        guard let first = points.first else { return }
+        var path = Path()
+        path.move(to: CGPoint(x: center.x + first.x * radius, y: center.y + first.y * radius))
+        for point in points.dropFirst() {
+            path.addLine(to: CGPoint(x: center.x + point.x * radius, y: center.y + point.y * radius))
+        }
+        path.closeSubpath()
+        context.fill(path, with: .color(color))
+        context.stroke(path, with: .color(Color.white.opacity(0.05)), lineWidth: 0.8)
+    }
+
+    private func landColor(_ index: Int) -> Color {
+        switch style {
+        case .nightAtlas:
+            return [
+                Color(red: 0.47, green: 0.57, blue: 0.34),
+                Color(red: 0.35, green: 0.53, blue: 0.33),
+                Color(red: 0.63, green: 0.55, blue: 0.31)
+            ][index]
+        case .realGeography:
+            return [
+                Color(red: 0.34, green: 0.55, blue: 0.31),
+                Color(red: 0.58, green: 0.66, blue: 0.35),
+                Color(red: 0.70, green: 0.62, blue: 0.38)
+            ][index]
+        case .vintageExplorer:
+            return [
+                Color(red: 0.72, green: 0.55, blue: 0.32),
+                Color(red: 0.66, green: 0.49, blue: 0.28),
+                Color(red: 0.78, green: 0.64, blue: 0.40)
+            ][index]
+        case .animeJourney:
+            return [
+                Color(red: 0.48, green: 0.72, blue: 0.52),
+                Color(red: 0.60, green: 0.76, blue: 0.58),
+                Color(red: 0.84, green: 0.68, blue: 0.42)
+            ][index]
+        case .terrainExpedition:
+            return [
+                Color(red: 0.42, green: 0.58, blue: 0.30),
+                Color(red: 0.38, green: 0.48, blue: 0.26),
+                Color(red: 0.66, green: 0.56, blue: 0.34)
+            ][index]
+        }
+    }
+
+    private func drawRoute(context: GraphicsContext, center: CGPoint, radius: CGFloat, from: CGPoint, to: CGPoint, color: Color, lift: CGFloat) {
+        let start = CGPoint(x: center.x + from.x * radius, y: center.y + from.y * radius)
+        let end = CGPoint(x: center.x + to.x * radius, y: center.y + to.y * radius)
+        var path = Path()
+        path.move(to: start)
+        path.addQuadCurve(
+            to: end,
+            control: CGPoint(x: (start.x + end.x) / 2, y: min(start.y, end.y) + lift * radius)
+        )
+        context.stroke(path, with: .color(color.opacity(0.22)), style: StrokeStyle(lineWidth: 7, lineCap: .round))
+        context.stroke(path, with: .color(color.opacity(0.92)), style: StrokeStyle(lineWidth: 2.1, lineCap: .round))
+    }
+}
+
 struct GlobeShowcase: View {
     @Environment(\.atlasTheme) private var theme
     let style: AtlasGlobeStyle
-    @State private var autoRotationAnchor = Date()
-    @State private var anchorLongitude: Double = 8
-    @GestureState private var dragTranslation: CGSize = .zero
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: false)) { timeline in
-            let elapsed = timeline.date.timeIntervalSince(autoRotationAnchor)
-            let autoRotation = elapsed * 0.92
-            let displayedLongitude = anchorLongitude + autoRotation + Double(dragTranslation.width) * 0.22
-
-            ZStack {
-                RoundedRectangle(cornerRadius: 32, style: .continuous)
-                    .fill(
-                        RadialGradient(
-                            colors: [
-                                AtlasColor.aqua.opacity(theme == .dark ? 0.18 : 0.11),
-                                AtlasColor.deepTeal.opacity(theme == .dark ? 0.34 : 0.16),
-                                Color.clear
-                            ],
-                            center: .center,
-                            startRadius: 20,
-                            endRadius: 190
-                        )
+        ZStack {
+            RoundedRectangle(cornerRadius: 32, style: .continuous)
+                .fill(
+                    RadialGradient(
+                        colors: [
+                            AtlasColor.aqua.opacity(theme == .dark ? 0.18 : 0.11),
+                            AtlasColor.deepTeal.opacity(theme == .dark ? 0.34 : 0.16),
+                            Color.clear
+                        ],
+                        center: .center,
+                        startRadius: 20,
+                        endRadius: 190
                     )
+                )
 
-                GlobeCanvas(style: style, longitudeOffset: displayedLongitude)
-                    .frame(width: 306, height: 306)
-                    .shadow(color: AtlasColor.aqua.opacity(theme == .dark ? 0.22 : 0.08), radius: 30, y: 10)
-                    .contentShape(Circle())
-                    .gesture(
-                        DragGesture(minimumDistance: 4)
-                            .updating($dragTranslation) { value, state, _ in
-                                state = value.translation
-                            }
-                            .onEnded { value in
-                                let rotationAtRelease = anchorLongitude + timeline.date.timeIntervalSince(autoRotationAnchor) * 0.92
-                                let momentum = value.translation.width + (value.predictedEndTranslation.width - value.translation.width) * 0.35
-                                anchorLongitude = rotationAtRelease + Double(momentum) * 0.22
-                                autoRotationAnchor = timeline.date
-                            }
-                    )
+            LightweightGlobeCanvas(style: style)
+                .frame(width: 312, height: 312)
+                .shadow(color: AtlasColor.aqua.opacity(theme == .dark ? 0.22 : 0.08), radius: 30, y: 10)
 
-                VStack {
-                    HStack(spacing: 8) {
-                        Image(systemName: "globe.europe.africa.fill")
-                            .font(.system(size: 9, weight: .bold))
-                            .foregroundStyle(AtlasColor.gold)
-                        Text(style.title)
-                            .font(.atlasText(9.5, weight: .black))
-                            .foregroundStyle(AtlasColor.text(theme))
-                        Text(style.capsule.uppercased())
-                            .font(.atlasText(7.2, weight: .black))
-                            .foregroundStyle(AtlasColor.gold)
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 2.5)
-                            .background(AtlasColor.gold.opacity(0.12), in: Capsule())
-                        Spacer(minLength: 0)
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(AtlasColor.card(theme).opacity(theme == .dark ? 0.90 : 0.88), in: Capsule())
-                    .overlay(Capsule().stroke(AtlasColor.cardStroke(theme)))
-                    .padding(.leading, 26)
-                    .padding(.top, 4)
-
-                    Spacer()
-
-                    HStack(spacing: 8) {
-                        miniLegend("Flights", color: AtlasColor.gold)
-                        miniLegend("Train", color: AtlasColor.aqua)
-                        miniLegend("Walk", color: AtlasColor.green)
-                    }
-                    .padding(.bottom, 8)
+            VStack {
+                HStack(spacing: 8) {
+                    Image(systemName: "globe.europe.africa.fill")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(AtlasColor.gold)
+                    Text(style.title)
+                        .font(.atlasText(9.5, weight: .black))
+                        .foregroundStyle(AtlasColor.text(theme))
+                    Text(style.capsule.uppercased())
+                        .font(.atlasText(7.2, weight: .black))
+                        .foregroundStyle(AtlasColor.gold)
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 2.5)
+                        .background(AtlasColor.gold.opacity(0.12), in: Capsule())
                 }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(AtlasColor.card(theme).opacity(theme == .dark ? 0.90 : 0.88), in: Capsule())
+                .overlay(Capsule().stroke(AtlasColor.cardStroke(theme)))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.leading, 26)
+                .padding(.trailing, 126)
+                .padding(.top, 0)
+
+                Spacer()
+
+                HStack(spacing: 8) {
+                    miniLegend("Flights", color: AtlasColor.gold)
+                    miniLegend("Train", color: AtlasColor.aqua)
+                    miniLegend("Walk", color: AtlasColor.green)
+                }
+                .padding(.bottom, 8)
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: 316)
         }
+        .frame(maxWidth: .infinity)
+        .frame(height: 316)
     }
 
     private func miniLegend(_ title: String, color: Color) -> some View {
@@ -350,7 +475,7 @@ struct GlobeModePreview: View {
                     )
                 )
 
-            GlobeCanvas(style: style, longitudeOffset: -28)
+            LightweightGlobeCanvas(style: style)
                 .scaleEffect(0.34)
                 .offset(y: 1)
 
@@ -381,6 +506,7 @@ struct GlobeCanvas: View {
     let style: AtlasGlobeStyle
     let longitudeOffset: Double
     private var scene: AtlasGlobeScene { AtlasGlobeScene(style: style) }
+    private var layers: AtlasGlobeLayers { scene.layers }
 
     var body: some View {
         Canvas { context, size in
@@ -421,6 +547,7 @@ struct GlobeCanvas: View {
             }
 
             drawSurfaceTexture(in: clippedContext, projection: projection, sphereRect: sphereRect)
+            drawOceanRelief(in: clippedContext, projection: projection, sphereRect: sphereRect)
 
             context.fill(sphere, with: .radialGradient(
                 Gradient(colors: [Color.white.opacity(0.11), Color.clear]),
@@ -429,7 +556,7 @@ struct GlobeCanvas: View {
                 endRadius: projection.radius * 0.92
             ))
 
-            for index in 0..<(style == .nightAtlas ? 140 : 90) {
+            for index in 0..<(style == .nightAtlas ? 68 : 90) {
                 let angle = CGFloat(index) * .pi * 2 / 120
                 let distance = projection.radius * (0.12 + CGFloat(index % 9) * 0.085)
                 let point = CGPoint(
@@ -458,25 +585,47 @@ struct GlobeCanvas: View {
                 drawCloudBand(context: context, projection: projection, latitude: -8, amplitude: 7, opacity: palette.cloudOpacity * 0.66, lineWidth: 4.5)
             }
 
-            for polygon in scene.landPolygons {
+            for polygon in layers.base.shallowWaterPolygons {
                 drawPolygon(polygon, in: context, projection: projection)
             }
 
-            for blob in scene.landBlobs {
+            for polygon in layers.base.landPolygons {
+                drawPolygon(polygon, in: context, projection: projection)
+            }
+
+            for polygon in layers.base.terrainPolygons {
+                drawPolygon(polygon, in: context, projection: projection)
+            }
+
+            for point in layers.base.surfacePoints {
+                drawSurfacePoint(point, in: context, projection: projection)
+            }
+
+            for blob in layers.base.landBlobs {
                 drawBlob(blob, in: context, projection: projection)
             }
 
-            for light in scene.cityLights {
+            for cutout in layers.base.waterCutouts {
+                drawPolygon(cutout, in: context, projection: projection)
+            }
+
+            for coastline in layers.base.coastlines {
+                drawCoastline(coastline, in: context, projection: projection)
+            }
+
+            for light in layers.lights.cityLights {
                 drawLight(light, in: context, projection: projection)
             }
 
-            for route in scene.routes {
+            for route in layers.routes.routes {
                 drawRoute(route, in: context, projection: projection)
             }
 
-            for city in scene.cities {
+            for city in layers.markers.cities {
                 drawCity(city, in: context, projection: projection)
             }
+
+            drawOverlayAnchors(in: context, projection: projection)
 
             drawForegroundAccent(in: clippedContext, projection: projection, sphereRect: sphereRect)
 
@@ -592,16 +741,16 @@ struct GlobeCanvas: View {
         case .nightAtlas:
             context.fill(
                 Path(ellipseIn: CGRect(
-                    x: sphereRect.minX - 16,
-                    y: sphereRect.minY + projection.radius * 0.08,
-                    width: projection.radius * 1.42,
-                    height: projection.radius * 1.06
+                    x: sphereRect.minX + 6,
+                    y: sphereRect.minY + projection.radius * 0.15,
+                    width: projection.radius * 1.10,
+                    height: projection.radius * 0.84
                 )),
                 with: .radialGradient(
-                    Gradient(colors: [Color.white.opacity(0.12), Color.clear]),
-                    center: CGPoint(x: projection.center.x - projection.radius * 0.38, y: projection.center.y + projection.radius * 0.02),
+                    Gradient(colors: [Color.white.opacity(0.09), Color.clear]),
+                    center: CGPoint(x: projection.center.x - projection.radius * 0.30, y: projection.center.y + projection.radius * 0.04),
                     startRadius: 0,
-                    endRadius: projection.radius * 0.78
+                    endRadius: projection.radius * 0.56
                 )
             )
 
@@ -610,7 +759,7 @@ struct GlobeCanvas: View {
                     let latitudeWave = latitude + sin((longitude + longitudeOffset) * .pi / 25) * 2.8
                     return projection.project(latitude: latitudeWave, longitude: longitude)
                 }
-                strokeRibbon(samples, in: context, color: AtlasColor.aqua.opacity(0.022), lineWidth: 3.0)
+                strokeRibbon(samples, in: context, color: AtlasColor.aqua.opacity(0.006), lineWidth: 1.6)
             }
 
             for latitude in stride(from: -8.0, through: 44.0, by: 17.0) {
@@ -618,8 +767,192 @@ struct GlobeCanvas: View {
                     let latitudeWave = latitude + cos((longitude + longitudeOffset) * .pi / 22) * 1.6
                     return projection.project(latitude: latitudeWave, longitude: longitude)
                 }
-                strokeRibbon(samples, in: context, color: AtlasColor.paleGold.opacity(0.018), lineWidth: 1.4)
+                strokeRibbon(samples, in: context, color: AtlasColor.paleGold.opacity(0.004), lineWidth: 0.8)
             }
+
+            drawPowerCorridor(
+                context: context,
+                projection: projection,
+                points: [(56, -4), (53, 0), (51, 5), (49, 10), (46, 14), (43, 19), (40, 24), (38, 29)],
+                color: AtlasColor.paleGold.opacity(0.07),
+                lineWidth: 1.0
+            )
+            drawPowerCorridor(
+                context: context,
+                projection: projection,
+                points: [(31, 33), (27, 34), (24, 38), (24, 46), (25, 54), (24, 60), (22, 72), (22, 88)],
+                color: AtlasColor.paleGold.opacity(0.05),
+                lineWidth: 0.9
+            )
+            drawPowerCorridor(
+                context: context,
+                projection: projection,
+                points: [(36, 130), (34, 135), (35, 139), (31, 121), (25, 121), (16, 108), (10, 106), (1, 104)],
+                color: AtlasColor.aqua.opacity(0.04),
+                lineWidth: 0.85
+            )
+
+            drawTerrainMicro(
+                context: context,
+                projection: projection,
+                points: [(46, -108), (38, -112), (20, -100), (-7, -60), (-23, -67), (22, 13), (14, 20), (28, 48), (48, 78), (-25, 134)],
+                color: Color.white.opacity(0.030),
+                size: 7.5
+            )
+            drawTerrainMicro(
+                context: context,
+                projection: projection,
+                points: [(52, 12), (42, 18), (37, 10), (33, 28), (0, 22), (-18, 28), (24, 78), (31, 103)],
+                color: AtlasColor.paleGold.opacity(0.020),
+                size: 6.2
+            )
+        }
+    }
+
+    private func drawOceanRelief(in context: GraphicsContext, projection: GlobeProjection, sphereRect: CGRect) {
+        switch style {
+        case .nightAtlas:
+            for band in 0..<4 {
+                let inset = projection.radius * (0.05 + CGFloat(band) * 0.08)
+                context.stroke(
+                    Path(ellipseIn: sphereRect.insetBy(dx: inset, dy: inset * 0.86)),
+                    with: .color(Color(red: 0.42, green: 0.59, blue: 0.72).opacity(0.038 - Double(band) * 0.007)),
+                    lineWidth: 1.0
+                )
+            }
+
+            context.fill(
+                Path(ellipseIn: CGRect(
+                    x: sphereRect.minX + projection.radius * 0.08,
+                    y: sphereRect.minY + projection.radius * 0.44,
+                    width: projection.radius * 0.92,
+                    height: projection.radius * 0.34
+                )),
+                with: .linearGradient(
+                    Gradient(colors: [Color(red: 0.02, green: 0.08, blue: 0.15).opacity(0.24), Color.clear, Color(red: 0.00, green: 0.03, blue: 0.07).opacity(0.18)]),
+                    startPoint: CGPoint(x: projection.center.x - projection.radius * 0.18, y: projection.center.y + projection.radius * 0.22),
+                    endPoint: CGPoint(x: projection.center.x + projection.radius * 0.26, y: projection.center.y + projection.radius * 0.42)
+                )
+            )
+
+            context.fill(
+                Path(ellipseIn: CGRect(
+                    x: sphereRect.minX + projection.radius * 0.06,
+                    y: sphereRect.minY + projection.radius * 0.16,
+                    width: projection.radius * 1.06,
+                    height: projection.radius * 0.80
+                )),
+                with: .radialGradient(
+                    Gradient(colors: [Color(red: 0.56, green: 0.69, blue: 0.80).opacity(0.16), Color.clear]),
+                    center: CGPoint(x: projection.center.x - projection.radius * 0.22, y: projection.center.y + projection.radius * 0.03),
+                    startRadius: 0,
+                    endRadius: projection.radius * 0.60
+                )
+            )
+
+            context.fill(
+                Path(ellipseIn: CGRect(
+                    x: sphereRect.minX + projection.radius * 0.18,
+                    y: sphereRect.minY + projection.radius * 0.54,
+                    width: projection.radius * 0.74,
+                    height: projection.radius * 0.28
+                )),
+                with: .linearGradient(
+                    Gradient(colors: [AtlasColor.aqua.opacity(0.018), Color.clear, Color.black.opacity(0.16)]),
+                    startPoint: CGPoint(x: projection.center.x - projection.radius * 0.18, y: projection.center.y + projection.radius * 0.34),
+                    endPoint: CGPoint(x: projection.center.x + projection.radius * 0.22, y: projection.center.y + projection.radius * 0.48)
+                )
+            )
+
+            for latitude in stride(from: -50.0, through: 24.0, by: 12.0) {
+                let samples = stride(from: -180.0, through: 180.0, by: 8.0).compactMap { longitude -> ProjectedPoint? in
+                    let wave = latitude + cos((longitude + longitudeOffset) * .pi / 30) * 1.7
+                    return projection.project(latitude: wave, longitude: longitude)
+                }
+                strokeRibbon(samples, in: context, color: Color(red: 0.05, green: 0.14, blue: 0.22).opacity(0.08), lineWidth: latitude < -8 ? 2.2 : 1.4)
+            }
+
+            var specular = Path()
+            specular.move(to: CGPoint(x: sphereRect.minX + projection.radius * 0.10, y: projection.center.y - projection.radius * 0.42))
+            specular.addCurve(
+                to: CGPoint(x: projection.center.x + projection.radius * 0.12, y: projection.center.y + projection.radius * 0.10),
+                control1: CGPoint(x: projection.center.x - projection.radius * 0.50, y: projection.center.y - projection.radius * 0.22),
+                control2: CGPoint(x: projection.center.x - projection.radius * 0.10, y: projection.center.y - projection.radius * 0.02)
+            )
+            context.stroke(
+                specular,
+                with: .color(Color.white.opacity(0.085)),
+                style: StrokeStyle(lineWidth: 5.2, lineCap: .round)
+            )
+
+            var shelf = Path()
+            shelf.move(to: CGPoint(x: sphereRect.minX + projection.radius * 0.20, y: projection.center.y + projection.radius * 0.36))
+            shelf.addCurve(
+                to: CGPoint(x: projection.center.x + projection.radius * 0.34, y: projection.center.y + projection.radius * 0.24),
+                control1: CGPoint(x: projection.center.x - projection.radius * 0.18, y: projection.center.y + projection.radius * 0.40),
+                control2: CGPoint(x: projection.center.x + projection.radius * 0.04, y: projection.center.y + projection.radius * 0.18)
+            )
+            context.stroke(
+                shelf,
+                with: .color(AtlasColor.aqua.opacity(0.035)),
+                style: StrokeStyle(lineWidth: 2.8, lineCap: .round)
+            )
+
+            for latitude in stride(from: -42.0, through: 18.0, by: 10.0) {
+                let samples = stride(from: -180.0, through: 180.0, by: 6.0).compactMap { longitude -> ProjectedPoint? in
+                    let wave = latitude + sin((longitude + longitudeOffset) * .pi / 18) * 0.9
+                    return projection.project(latitude: wave, longitude: longitude)
+                }
+                strokeRibbon(samples, in: context, color: Color.white.opacity(latitude < -6 ? 0.010 : 0.007), lineWidth: latitude < -10 ? 0.9 : 0.7)
+            }
+
+        case .realGeography:
+            for band in 0..<3 {
+                let inset = projection.radius * (0.10 + CGFloat(band) * 0.10)
+                context.stroke(
+                    Path(ellipseIn: sphereRect.insetBy(dx: inset, dy: inset * 0.84)),
+                    with: .color(Color(red: 0.21, green: 0.45, blue: 0.63).opacity(0.06 - Double(band) * 0.012)),
+                    lineWidth: 1.0
+                )
+            }
+
+            context.fill(
+                Path(ellipseIn: CGRect(
+                    x: sphereRect.minX + projection.radius * 0.10,
+                    y: sphereRect.minY + projection.radius * 0.10,
+                    width: projection.radius * 1.05,
+                    height: projection.radius * 0.86
+                )),
+                with: .linearGradient(
+                    Gradient(colors: [Color.white.opacity(0.08), Color.clear, Color(red: 0.04, green: 0.16, blue: 0.25).opacity(0.10)]),
+                    startPoint: CGPoint(x: projection.center.x - projection.radius * 0.30, y: projection.center.y - projection.radius * 0.16),
+                    endPoint: CGPoint(x: projection.center.x + projection.radius * 0.30, y: projection.center.y + projection.radius * 0.38)
+                )
+            )
+
+            var highlight = Path()
+            highlight.move(to: CGPoint(x: sphereRect.minX + projection.radius * 0.12, y: projection.center.y - projection.radius * 0.28))
+            highlight.addCurve(
+                to: CGPoint(x: projection.center.x + projection.radius * 0.20, y: projection.center.y + projection.radius * 0.02),
+                control1: CGPoint(x: projection.center.x - projection.radius * 0.34, y: projection.center.y - projection.radius * 0.16),
+                control2: CGPoint(x: projection.center.x - projection.radius * 0.06, y: projection.center.y - projection.radius * 0.03)
+            )
+            context.stroke(
+                highlight,
+                with: .color(Color.white.opacity(0.10)),
+                style: StrokeStyle(lineWidth: 4.0, lineCap: .round)
+            )
+
+            for latitude in stride(from: -38.0, through: 28.0, by: 12.0) {
+                let samples = stride(from: -180.0, through: 180.0, by: 7.0).compactMap { longitude -> ProjectedPoint? in
+                    let wave = latitude + sin((longitude + longitudeOffset) * .pi / 20) * 0.8
+                    return projection.project(latitude: wave, longitude: longitude)
+                }
+                strokeRibbon(samples, in: context, color: Color.white.opacity(0.014), lineWidth: 0.8)
+            }
+
+        default:
+            break
         }
     }
 
@@ -734,13 +1067,78 @@ struct GlobeCanvas: View {
         context.stroke(path, with: .color(Color.white.opacity(opacity)), style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
     }
 
+    private func drawPowerCorridor(
+        context: GraphicsContext,
+        projection: GlobeProjection,
+        points: [(Double, Double)],
+        color: Color,
+        lineWidth: CGFloat
+    ) {
+        let projected = points.compactMap { projection.project(latitude: $0.0, longitude: $0.1) }
+        guard projected.count > 2 else { return }
+        strokeRibbon(projected, in: context, color: color, lineWidth: lineWidth)
+    }
+
+    private func drawTerrainMicro(
+        context: GraphicsContext,
+        projection: GlobeProjection,
+        points: [(Double, Double)],
+        color: Color,
+        size: CGFloat
+    ) {
+        for point in points {
+            guard let projected = projection.project(latitude: point.0, longitude: point.1), projected.depth > 0.02 else {
+                continue
+            }
+            let width = size * projected.scale
+            let rect = CGRect(
+                x: projected.point.x - width / 2,
+                y: projected.point.y - width * 0.34,
+                width: width,
+                height: width * 0.56
+            )
+            context.fill(Path(ellipseIn: rect), with: .color(color.opacity(0.55 + projected.depth * 0.25)))
+        }
+    }
+
     private func drawBlob(_ blob: GlobeBlob, in context: GraphicsContext, projection: GlobeProjection) {
         guard let projected = projection.project(latitude: blob.latitude, longitude: blob.longitude), projected.depth > -0.22 else {
             return
         }
 
-        let width = blob.size * projected.scale * (0.82 + max(projected.depth, -0.1) * 0.14)
-        let height = width * blob.aspect
+        let widthScale: CGFloat
+        let heightScale: CGFloat
+        let opacityBoost: Double
+
+        switch blob.kind {
+        case .mountain:
+            widthScale = 0.78
+            heightScale = 0.82
+            opacityBoost = 1.08
+        case .desert:
+            widthScale = 1.12
+            heightScale = 0.74
+            opacityBoost = 0.96
+        case .forest, .jungle:
+            widthScale = 0.94
+            heightScale = 0.88
+            opacityBoost = 1.02
+        case .tundra, .plateau:
+            widthScale = 1.00
+            heightScale = 0.80
+            opacityBoost = 0.94
+        case .ice:
+            widthScale = 1.04
+            heightScale = 0.70
+            opacityBoost = 1.12
+        case .generic:
+            widthScale = 1.0
+            heightScale = 1.0
+            opacityBoost = 1.0
+        }
+
+        let width = blob.size * projected.scale * widthScale * (0.82 + max(projected.depth, -0.1) * 0.14)
+        let height = width * blob.aspect * heightScale
         let rect = CGRect(
             x: projected.point.x - width / 2,
             y: projected.point.y - height / 2,
@@ -749,8 +1147,36 @@ struct GlobeCanvas: View {
         )
         context.fill(
             Path(ellipseIn: rect),
-            with: .color(blob.color.opacity(blob.opacity * scene.palette.landOpacityMultiplier * (0.46 + max(projected.depth, 0) * 0.38)))
+            with: .color(blob.color.opacity(blob.opacity * opacityBoost * scene.palette.landOpacityMultiplier * (0.46 + max(projected.depth, 0) * 0.38)))
         )
+    }
+
+    private func drawSurfacePoint(_ point: GlobeSurfacePoint, in context: GraphicsContext, projection: GlobeProjection) {
+        guard let projected = projection.project(latitude: point.latitude, longitude: point.longitude), projected.depth > -0.14 else {
+            return
+        }
+
+        let scaleBoost: CGFloat
+        switch point.kind {
+        case .shallowWater:
+            scaleBoost = 1.08
+        case .desert, .ice:
+            scaleBoost = 1.04
+        case .forest, .jungle:
+            scaleBoost = 0.96
+        default:
+            scaleBoost = 1.0
+        }
+
+        let size = point.size * projected.scale * scaleBoost
+        let rect = CGRect(
+            x: projected.point.x - size / 2,
+            y: projected.point.y - size / 2,
+            width: size,
+            height: size
+        )
+        let opacity = point.opacity * (0.60 + max(projected.depth, 0) * 0.40)
+        context.fill(Path(ellipseIn: rect), with: .color(point.color.opacity(opacity)))
     }
 
     private func drawPolygon(_ polygon: GlobePolygon, in context: GraphicsContext, projection: GlobeProjection) {
@@ -772,7 +1198,39 @@ struct GlobeCanvas: View {
         let averageDepth = projectedPoints.map(\.depth).reduce(0, +) / Double(projectedPoints.count)
         let opacity = polygon.opacity * scene.palette.landOpacityMultiplier * (0.42 + max(averageDepth, 0) * 0.36)
         context.fill(path, with: .color(polygon.color.opacity(opacity)))
-        context.stroke(path, with: .color(polygon.stroke.opacity(opacity * 0.32)), lineWidth: polygon.lineWidth)
+        context.stroke(path, with: .color(polygon.stroke.opacity(opacity * 0.12)), lineWidth: polygon.lineWidth)
+    }
+
+    private func drawCoastline(_ coastline: GlobeCoastline, in context: GraphicsContext, projection: GlobeProjection) {
+        let projectedPoints = coastline.points.compactMap {
+            projection.project(latitude: $0.latitude, longitude: $0.longitude)
+        }
+        guard projectedPoints.count > 2 else { return }
+
+        let visiblePoints = projectedPoints.filter { $0.depth > -0.06 }
+        guard visiblePoints.count >= max(4, projectedPoints.count / 5) else { return }
+
+        var path = Path()
+        path.move(to: projectedPoints[0].point)
+        for point in projectedPoints.dropFirst() {
+            path.addLine(to: point.point)
+        }
+        path.closeSubpath()
+
+        let averageDepth = projectedPoints.map(\.depth).reduce(0, +) / Double(projectedPoints.count)
+        let opacity = coastline.opacity * (0.58 + max(averageDepth, 0) * 0.48)
+        let rimOpacity = opacity * (style == .nightAtlas ? 0.22 : 0.16)
+        let rimLineWidth = coastline.lineWidth + (style == .nightAtlas ? 0.68 : 0.52)
+        context.stroke(
+            path,
+            with: .color(Color.white.opacity(rimOpacity)),
+            style: StrokeStyle(lineWidth: rimLineWidth, lineCap: .round, lineJoin: .round)
+        )
+        context.stroke(
+            path,
+            with: .color(coastline.color.opacity(opacity)),
+            style: StrokeStyle(lineWidth: coastline.lineWidth, lineCap: .round, lineJoin: .round)
+        )
     }
 
     private func drawLight(_ light: GlobeLight, in context: GraphicsContext, projection: GlobeProjection) {
@@ -847,6 +1305,25 @@ struct GlobeCanvas: View {
                     .foregroundStyle(AtlasColor.ink.opacity(0.96)),
                 at: CGPoint(x: projected.point.x + nodeSize + 4, y: projected.point.y - 1),
                 anchor: .leading
+            )
+        }
+    }
+
+    private func drawOverlayAnchors(in context: GraphicsContext, projection: GlobeProjection) {
+        guard style == .nightAtlas else { return }
+        guard !layers.overlays.discoveryAnchors.isEmpty else { return }
+
+        for anchor in layers.overlays.discoveryAnchors {
+            guard let projected = projection.project(latitude: anchor.latitude, longitude: anchor.longitude), projected.depth > 0.12 else {
+                continue
+            }
+
+            let size = max(10, 11.5 * projected.scale)
+            let rect = CGRect(x: projected.point.x - size / 2, y: projected.point.y - size / 2, width: size, height: size)
+            context.stroke(
+                RoundedRectangle(cornerRadius: size * 0.36, style: .continuous).path(in: rect),
+                with: .color(AtlasColor.gold.opacity(0.22)),
+                lineWidth: 0.8
             )
         }
     }
@@ -938,27 +1415,27 @@ private struct GlobePalette {
 
 private func globePalette(for style: AtlasGlobeStyle) -> GlobePalette {
     switch style {
-    case .nightAtlas:
-        return GlobePalette(
-            oceanColors: [Color(red: 0.30, green: 0.47, blue: 0.58), Color(red: 0.08, green: 0.20, blue: 0.29), Color(red: 0.01, green: 0.07, blue: 0.11), Color.black.opacity(0.99)],
-            atmosphere: AtlasColor.aqua,
-            sparkColor: AtlasColor.paleGold,
-            sparkOpacity: 0.065,
-            cloudOpacity: 0.045,
-            showsGrid: true,
-            gridOpacity: 0.015,
-            landOpacityMultiplier: 0.92,
-            lightGlowOpacity: 0.32,
-            lightCoreOpacity: 0.96,
-            cityGlowOpacity: 0.28,
-            cityStrokeOpacity: 1.0,
-            frontRouteOpacity: 0.90,
-            frontRouteGlowOpacity: 0.12,
-            frontRouteWidth: 1.05,
-            backRouteOpacity: 0.08,
-            backRouteGlowOpacity: 0.05,
-            backRouteWidth: 1.45
-        )
+        case .nightAtlas:
+            return GlobePalette(
+                oceanColors: [Color(red: 0.30, green: 0.47, blue: 0.58), Color(red: 0.08, green: 0.20, blue: 0.29), Color(red: 0.01, green: 0.07, blue: 0.11), Color.black.opacity(0.99)],
+                atmosphere: AtlasColor.aqua,
+                sparkColor: AtlasColor.paleGold,
+                sparkOpacity: 0.038,
+                cloudOpacity: 0.045,
+                showsGrid: true,
+                gridOpacity: 0.009,
+                landOpacityMultiplier: 0.84,
+                lightGlowOpacity: 0.32,
+                lightCoreOpacity: 0.96,
+                cityGlowOpacity: 0.28,
+                cityStrokeOpacity: 1.0,
+                frontRouteOpacity: 0.78,
+                frontRouteGlowOpacity: 0.05,
+                frontRouteWidth: 0.88,
+                backRouteOpacity: 0.05,
+                backRouteGlowOpacity: 0.02,
+                backRouteWidth: 1.1
+            )
     case .realGeography:
         return GlobePalette(
             oceanColors: [Color(red: 0.77, green: 0.87, blue: 0.92), Color(red: 0.44, green: 0.67, blue: 0.78), Color(red: 0.18, green: 0.38, blue: 0.56), Color(red: 0.07, green: 0.21, blue: 0.34)],
@@ -1152,6 +1629,28 @@ private struct GlobeVector3 {
     }
 }
 
+private enum GlobeTerrainKind {
+    case generic
+    case mountain
+    case desert
+    case forest
+    case jungle
+    case tundra
+    case plateau
+    case ice
+}
+
+private enum GlobeSurfaceKind {
+    case shallowWater
+    case land
+    case desert
+    case forest
+    case jungle
+    case plateau
+    case tundra
+    case ice
+}
+
 private struct GlobeBlob {
     let latitude: Double
     let longitude: Double
@@ -1159,6 +1658,34 @@ private struct GlobeBlob {
     let aspect: CGFloat
     let color: Color
     let opacity: Double
+    let kind: GlobeTerrainKind
+
+    init(
+        latitude: Double,
+        longitude: Double,
+        size: CGFloat,
+        aspect: CGFloat,
+        color: Color,
+        opacity: Double,
+        kind: GlobeTerrainKind = .generic
+    ) {
+        self.latitude = latitude
+        self.longitude = longitude
+        self.size = size
+        self.aspect = aspect
+        self.color = color
+        self.opacity = opacity
+        self.kind = kind
+    }
+}
+
+private struct GlobeSurfacePoint {
+    let latitude: Double
+    let longitude: Double
+    let size: CGFloat
+    let opacity: Double
+    let color: Color
+    let kind: GlobeSurfaceKind
 }
 
 private struct GlobeLight {
@@ -1181,6 +1708,13 @@ private struct GlobePolygon {
     let lineWidth: CGFloat
 }
 
+private struct GlobeCoastline {
+    let points: [GlobePolygonPoint]
+    let color: Color
+    let opacity: Double
+    let lineWidth: CGFloat
+}
+
 private struct GlobeCity {
     let name: String
     let latitude: Double
@@ -1196,13 +1730,54 @@ private struct GlobeRoute {
     let altitude: Double
 }
 
+private struct GlobeMediaAnchor {
+    let latitude: Double
+    let longitude: Double
+}
+
+private struct GlobeDiscoveryAnchor {
+    let latitude: Double
+    let longitude: Double
+}
+
+private struct GlobeBaseLayer {
+    let surfacePoints: [GlobeSurfacePoint]
+    let shallowWaterPolygons: [GlobePolygon]
+    let landPolygons: [GlobePolygon]
+    let terrainPolygons: [GlobePolygon]
+    let landBlobs: [GlobeBlob]
+    let waterCutouts: [GlobePolygon]
+    let coastlines: [GlobeCoastline]
+}
+
+private struct GlobeLightsLayer {
+    let cityLights: [GlobeLight]
+}
+
+private struct GlobeRoutesLayer {
+    let routes: [GlobeRoute]
+}
+
+private struct GlobeMarkersLayer {
+    let cities: [GlobeCity]
+}
+
+private struct GlobeOverlayLayer {
+    let mediaAnchors: [GlobeMediaAnchor]
+    let discoveryAnchors: [GlobeDiscoveryAnchor]
+}
+
+private struct AtlasGlobeLayers {
+    let base: GlobeBaseLayer
+    let lights: GlobeLightsLayer
+    let routes: GlobeRoutesLayer
+    let markers: GlobeMarkersLayer
+    let overlays: GlobeOverlayLayer
+}
+
 private struct AtlasGlobeScene {
     let palette: GlobePalette
-    let landPolygons: [GlobePolygon]
-    let landBlobs: [GlobeBlob]
-    let cityLights: [GlobeLight]
-    let cities: [GlobeCity]
-    let routes: [GlobeRoute]
+    let layers: AtlasGlobeLayers
 
     init(style: AtlasGlobeStyle) {
         let palette = globePalette(for: style)
@@ -1213,15 +1788,582 @@ private struct AtlasGlobeScene {
         let reykjavikLabeled = GlobeCity(name: "Reykjavik", latitude: 64.1466, longitude: -21.9426, color: AtlasColor.paleGold, showsLabel: style == .vintageExplorer)
 
         self.palette = palette
-        self.landPolygons = AtlasGlobeScene.continentPolygons(for: style)
-        self.landBlobs = AtlasGlobeScene.continentBlobs(for: style)
-        self.cityLights = AtlasGlobeScene.lightBlobs(for: style)
-        self.cities = [reykjavikLabeled, paris, dubai, hoiAn, cusco]
-        self.routes = [
+        let landPolygons = AtlasGlobeScene.continentPolygons(for: style)
+        let cities = [reykjavikLabeled, paris, dubai, hoiAn, cusco]
+        let routes = [
             GlobeRoute(from: cusco, to: paris, color: style == .vintageExplorer ? Color(red: 0.28, green: 0.14, blue: 0.06) : AtlasColor.gold, altitude: style == .nightAtlas ? 0.062 : 0.085),
             GlobeRoute(from: paris, to: hoiAn, color: style == .animeJourney ? Color(red: 0.99, green: 0.73, blue: 0.70) : AtlasColor.gold, altitude: style == .nightAtlas ? 0.038 : 0.05),
             GlobeRoute(from: dubai, to: hoiAn, color: style == .terrainExpedition ? AtlasColor.green : AtlasColor.aqua, altitude: style == .nightAtlas ? 0.020 : 0.028),
             GlobeRoute(from: reykjavikLabeled, to: paris, color: style == .realGeography ? Color.white.opacity(0.82) : AtlasColor.paleGold, altitude: style == .nightAtlas ? 0.016 : 0.024)
+        ]
+        let base = GlobeBaseLayer(
+            surfacePoints: AtlasGlobeScene.surfacePoints(
+                for: style,
+                landPolygons: landPolygons,
+                shallowWaterPolygons: AtlasGlobeScene.shallowWaterPolygons(for: style),
+                terrainPolygons: AtlasGlobeScene.terrainPolygons(for: style)
+            ),
+            shallowWaterPolygons: AtlasGlobeScene.shallowWaterPolygons(for: style),
+            landPolygons: landPolygons,
+            terrainPolygons: AtlasGlobeScene.terrainPolygons(for: style),
+            landBlobs: AtlasGlobeScene.continentBlobs(for: style),
+            waterCutouts: AtlasGlobeScene.waterCutouts(for: style),
+            coastlines: AtlasGlobeScene.coastlines(for: style, polygons: landPolygons)
+        )
+        let lights = GlobeLightsLayer(cityLights: AtlasGlobeScene.lightBlobs(for: style))
+        let markers = GlobeMarkersLayer(cities: cities)
+        let overlays = GlobeOverlayLayer(
+            mediaAnchors: style == .nightAtlas ? [
+                GlobeMediaAnchor(latitude: 51.5, longitude: 1.0),
+                GlobeMediaAnchor(latitude: 33.8, longitude: 138.0),
+                GlobeMediaAnchor(latitude: -12.4, longitude: -74.0)
+            ] : [],
+            discoveryAnchors: []
+        )
+        self.layers = AtlasGlobeLayers(
+            base: base,
+            lights: lights,
+            routes: GlobeRoutesLayer(routes: routes),
+            markers: markers,
+            overlays: overlays
+        )
+    }
+
+    private static func coastlines(for style: AtlasGlobeStyle, polygons: [GlobePolygon]) -> [GlobeCoastline] {
+        let color: Color
+        let opacity: Double
+        let lineWidth: CGFloat
+
+        switch style {
+        case .nightAtlas:
+            color = Color(red: 0.84, green: 0.74, blue: 0.48)
+            opacity = 0.18
+            lineWidth = 1.1
+        case .realGeography:
+            color = Color.white.opacity(0.70)
+            opacity = 0.28
+            lineWidth = 1.0
+        default:
+            return []
+        }
+
+        let primary = polygons.map {
+            GlobeCoastline(points: $0.points, color: color, opacity: opacity, lineWidth: lineWidth)
+        }
+        let secondary = secondaryCoastlines(for: style, color: color)
+        return primary + secondary
+    }
+
+    private static func surfacePoints(
+        for style: AtlasGlobeStyle,
+        landPolygons: [GlobePolygon],
+        shallowWaterPolygons: [GlobePolygon],
+        terrainPolygons: [GlobePolygon]
+    ) -> [GlobeSurfacePoint] {
+        guard style == .nightAtlas || style == .realGeography else { return [] }
+
+        let classification = terrainClassification(for: style)
+        var points: [GlobeSurfacePoint] = []
+        points.reserveCapacity(12000)
+
+        let latitudes = stride(from: -72.0, through: 82.0, by: 1.5)
+        let longitudes = stride(from: -180.0, through: 180.0, by: 1.5)
+
+        for latitude in latitudes {
+            for longitude in longitudes {
+                let point = GlobePolygonPoint(latitude: latitude, longitude: longitude)
+
+                if let terrain = classification.first(where: { polygonContains(point, polygon: $0.polygon) }) {
+                    points.append(
+                        GlobeSurfacePoint(
+                            latitude: latitude,
+                            longitude: longitude,
+                            size: terrain.size,
+                            opacity: terrain.opacity,
+                            color: terrain.color,
+                            kind: terrain.kind
+                        )
+                    )
+                    continue
+                }
+
+                if shallowWaterPolygons.contains(where: { polygonContains(point, polygon: $0) }) {
+                    let tone = style == .nightAtlas
+                        ? Color(red: 0.16, green: 0.28, blue: 0.34)
+                        : Color(red: 0.67, green: 0.84, blue: 0.87)
+                    points.append(
+                        GlobeSurfacePoint(
+                            latitude: latitude,
+                            longitude: longitude,
+                            size: style == .nightAtlas ? 1.75 : 1.95,
+                            opacity: style == .nightAtlas ? 0.28 : 0.36,
+                            color: tone,
+                            kind: .shallowWater
+                        )
+                    )
+                    continue
+                }
+
+                if landPolygons.contains(where: { polygonContains(point, polygon: $0) }) {
+                    let landTone = style == .nightAtlas
+                        ? Color(red: 0.19, green: 0.24, blue: 0.15)
+                        : Color(red: 0.57, green: 0.63, blue: 0.40)
+                    points.append(
+                        GlobeSurfacePoint(
+                            latitude: latitude,
+                            longitude: longitude,
+                            size: style == .nightAtlas ? 1.6 : 1.8,
+                            opacity: style == .nightAtlas ? 0.18 : 0.24,
+                            color: landTone,
+                            kind: .land
+                        )
+                    )
+                }
+            }
+        }
+
+        return points
+    }
+
+    private static func terrainClassification(for style: AtlasGlobeStyle) -> [(polygon: GlobePolygon, kind: GlobeSurfaceKind, color: Color, opacity: Double, size: CGFloat)] {
+        let desert = style == .nightAtlas ? Color(red: 0.40, green: 0.31, blue: 0.17) : Color(red: 0.82, green: 0.71, blue: 0.43)
+        let forest = style == .nightAtlas ? Color(red: 0.18, green: 0.31, blue: 0.20) : Color(red: 0.29, green: 0.52, blue: 0.28)
+        let jungle = style == .nightAtlas ? Color(red: 0.16, green: 0.34, blue: 0.21) : Color(red: 0.25, green: 0.55, blue: 0.31)
+        let plateau = style == .nightAtlas ? Color(red: 0.29, green: 0.27, blue: 0.18) : Color(red: 0.62, green: 0.56, blue: 0.34)
+        let tundra = style == .nightAtlas ? Color(red: 0.27, green: 0.33, blue: 0.31) : Color(red: 0.67, green: 0.75, blue: 0.68)
+        let ice = style == .nightAtlas ? Color(red: 0.62, green: 0.68, blue: 0.72) : Color.white.opacity(0.92)
+
+        return terrainPolygons(for: style).map { polygon in
+            let hint = polygon.color
+            if hint == desert || approxMatch(hint, desert) {
+                return (polygon, .desert, desert, style == .nightAtlas ? 0.34 : 0.42, style == .nightAtlas ? 1.95 : 2.05)
+            }
+            if hint == jungle || approxMatch(hint, jungle) {
+                return (polygon, .jungle, jungle, style == .nightAtlas ? 0.30 : 0.38, style == .nightAtlas ? 1.85 : 1.95)
+            }
+            if hint == forest || approxMatch(hint, forest) {
+                return (polygon, .forest, forest, style == .nightAtlas ? 0.28 : 0.36, style == .nightAtlas ? 1.8 : 1.9)
+            }
+            if hint == plateau || approxMatch(hint, plateau) {
+                return (polygon, .plateau, plateau, style == .nightAtlas ? 0.28 : 0.34, style == .nightAtlas ? 1.8 : 1.95)
+            }
+            if hint == tundra || approxMatch(hint, tundra) {
+                return (polygon, .tundra, tundra, style == .nightAtlas ? 0.24 : 0.32, style == .nightAtlas ? 1.75 : 1.9)
+            }
+            return (polygon, .ice, ice, style == .nightAtlas ? 0.32 : 0.42, style == .nightAtlas ? 1.9 : 2.0)
+        }
+    }
+
+    private static func polygonContains(_ point: GlobePolygonPoint, polygon: GlobePolygon) -> Bool {
+        guard polygon.points.count > 2 else { return false }
+        var contains = false
+        var previous = polygon.points.last!
+
+        for current in polygon.points {
+            let currentLon = current.longitude
+            let currentLat = current.latitude
+            let previousLon = previous.longitude
+            let previousLat = previous.latitude
+
+            let crosses = ((currentLat > point.latitude) != (previousLat > point.latitude))
+            if crosses {
+                let slope = (previousLon - currentLon) * (point.latitude - currentLat) / ((previousLat - currentLat) == 0 ? 0.0001 : (previousLat - currentLat)) + currentLon
+                if point.longitude < slope {
+                    contains.toggle()
+                }
+            }
+
+            previous = current
+        }
+
+        return contains
+    }
+
+    private static func approxMatch(_ lhs: Color, _ rhs: Color) -> Bool {
+        String(describing: lhs) == String(describing: rhs)
+    }
+
+    private static func shallowWaterPolygons(for style: AtlasGlobeStyle) -> [GlobePolygon] {
+        let waterColor: Color
+        let stroke: Color
+        let opacity: Double
+
+        switch style {
+        case .nightAtlas:
+            waterColor = Color(red: 0.10, green: 0.20, blue: 0.25)
+            stroke = Color(red: 0.18, green: 0.33, blue: 0.38)
+            opacity = 0.18
+        case .realGeography:
+            waterColor = Color(red: 0.60, green: 0.80, blue: 0.83)
+            stroke = Color(red: 0.69, green: 0.86, blue: 0.90)
+            opacity = 0.26
+        default:
+            return []
+        }
+
+        return [
+            GlobePolygon(
+                points: [
+                    .init(latitude: 40, longitude: -13), .init(latitude: 44, longitude: -8),
+                    .init(latitude: 46, longitude: -1), .init(latitude: 46, longitude: 9),
+                    .init(latitude: 44, longitude: 18), .init(latitude: 41, longitude: 26),
+                    .init(latitude: 37, longitude: 33), .init(latitude: 34, longitude: 31),
+                    .init(latitude: 34, longitude: 22), .init(latitude: 36, longitude: 12),
+                    .init(latitude: 38, longitude: 4), .init(latitude: 39, longitude: -6)
+                ],
+                color: waterColor,
+                stroke: stroke,
+                opacity: opacity,
+                lineWidth: 0.20
+            ),
+            GlobePolygon(
+                points: [
+                    .init(latitude: 35, longitude: -18), .init(latitude: 36, longitude: -12),
+                    .init(latitude: 35, longitude: -5), .init(latitude: 34, longitude: 4),
+                    .init(latitude: 32, longitude: 13), .init(latitude: 29, longitude: 22),
+                    .init(latitude: 24, longitude: 31), .init(latitude: 19, longitude: 39),
+                    .init(latitude: 12, longitude: 45), .init(latitude: 7, longitude: 49),
+                    .init(latitude: 1, longitude: 47), .init(latitude: -5, longitude: 44),
+                    .init(latitude: -12, longitude: 43), .init(latitude: -19, longitude: 42),
+                    .init(latitude: -28, longitude: 36), .init(latitude: -34, longitude: 26),
+                    .init(latitude: -33, longitude: 15), .init(latitude: -27, longitude: 8),
+                    .init(latitude: -19, longitude: 3), .init(latitude: -8, longitude: 0),
+                    .init(latitude: 4, longitude: -3), .init(latitude: 15, longitude: -9),
+                    .init(latitude: 26, longitude: -15)
+                ],
+                color: waterColor,
+                stroke: stroke,
+                opacity: opacity * 0.82,
+                lineWidth: 0.20
+            ),
+            GlobePolygon(
+                points: [
+                    .init(latitude: 8, longitude: 94), .init(latitude: 11, longitude: 99),
+                    .init(latitude: 13, longitude: 106), .init(latitude: 14, longitude: 114),
+                    .init(latitude: 12, longitude: 121), .init(latitude: 8, longitude: 126),
+                    .init(latitude: 2, longitude: 128), .init(latitude: -2, longitude: 123),
+                    .init(latitude: -2, longitude: 114), .init(latitude: 1, longitude: 105),
+                    .init(latitude: 4, longitude: 98)
+                ],
+                color: waterColor,
+                stroke: stroke,
+                opacity: opacity * 0.78,
+                lineWidth: 0.20
+            ),
+            GlobePolygon(
+                points: [
+                    .init(latitude: 32, longitude: 122), .init(latitude: 35, longitude: 126),
+                    .init(latitude: 38, longitude: 130), .init(latitude: 39, longitude: 136),
+                    .init(latitude: 38, longitude: 142), .init(latitude: 34, longitude: 145),
+                    .init(latitude: 29, longitude: 142), .init(latitude: 26, longitude: 136),
+                    .init(latitude: 27, longitude: 129), .init(latitude: 29, longitude: 124)
+                ],
+                color: waterColor,
+                stroke: stroke,
+                opacity: opacity * 0.76,
+                lineWidth: 0.20
+            )
+        ]
+    }
+
+    private static func waterCutouts(for style: AtlasGlobeStyle) -> [GlobePolygon] {
+        let waterColor: Color
+        let opacity: Double
+
+        switch style {
+        case .nightAtlas:
+            waterColor = Color(red: 0.02, green: 0.07, blue: 0.12)
+            opacity = 0.82
+        case .realGeography:
+            waterColor = Color(red: 0.26, green: 0.48, blue: 0.61)
+            opacity = 0.64
+        default:
+            return []
+        }
+
+        return [
+            GlobePolygon(
+                points: [
+                    .init(latitude: 35, longitude: -6), .init(latitude: 37, longitude: 0),
+                    .init(latitude: 39, longitude: 7), .init(latitude: 40, longitude: 14),
+                    .init(latitude: 38, longitude: 21), .init(latitude: 36, longitude: 28),
+                    .init(latitude: 34, longitude: 33), .init(latitude: 31, longitude: 31),
+                    .init(latitude: 33, longitude: 23), .init(latitude: 35, longitude: 15),
+                    .init(latitude: 36, longitude: 8), .init(latitude: 36, longitude: 1),
+                    .init(latitude: 35, longitude: -4)
+                ],
+                color: waterColor,
+                stroke: waterColor,
+                opacity: opacity,
+                lineWidth: 0.1
+            ),
+            GlobePolygon(
+                points: [
+                    .init(latitude: 46, longitude: 27), .init(latitude: 46, longitude: 32),
+                    .init(latitude: 45, longitude: 37), .init(latitude: 43, longitude: 40),
+                    .init(latitude: 41, longitude: 39), .init(latitude: 41, longitude: 32),
+                    .init(latitude: 42, longitude: 28), .init(latitude: 46, longitude: 27)
+                ],
+                color: waterColor,
+                stroke: waterColor,
+                opacity: opacity * 0.92,
+                lineWidth: 0.1
+            ),
+            GlobePolygon(
+                points: [
+                    .init(latitude: 30, longitude: 33), .init(latitude: 27, longitude: 34),
+                    .init(latitude: 23, longitude: 36), .init(latitude: 19, longitude: 39),
+                    .init(latitude: 15, longitude: 41), .init(latitude: 12, longitude: 43),
+                    .init(latitude: 15, longitude: 44), .init(latitude: 20, longitude: 42),
+                    .init(latitude: 24, longitude: 39), .init(latitude: 28, longitude: 36),
+                    .init(latitude: 30, longitude: 34)
+                ],
+                color: waterColor,
+                stroke: waterColor,
+                opacity: opacity * 0.96,
+                lineWidth: 0.1
+            ),
+            GlobePolygon(
+                points: [
+                    .init(latitude: 30, longitude: 47), .init(latitude: 29, longitude: 50),
+                    .init(latitude: 28, longitude: 53), .init(latitude: 26, longitude: 55),
+                    .init(latitude: 25, longitude: 56), .init(latitude: 24, longitude: 54),
+                    .init(latitude: 25, longitude: 51), .init(latitude: 27, longitude: 49),
+                    .init(latitude: 29, longitude: 47)
+                ],
+                color: waterColor,
+                stroke: waterColor,
+                opacity: opacity * 0.88,
+                lineWidth: 0.1
+            ),
+            GlobePolygon(
+                points: [
+                    .init(latitude: 55, longitude: 8), .init(latitude: 58, longitude: 12),
+                    .init(latitude: 60, longitude: 18), .init(latitude: 61, longitude: 24),
+                    .init(latitude: 59, longitude: 25), .init(latitude: 56, longitude: 21),
+                    .init(latitude: 54, longitude: 16), .init(latitude: 54, longitude: 10)
+                ],
+                color: waterColor,
+                stroke: waterColor,
+                opacity: opacity * 0.68,
+                lineWidth: 0.1
+            ),
+            GlobePolygon(
+                points: [
+                    .init(latitude: 46, longitude: 9), .init(latitude: 45, longitude: 12),
+                    .init(latitude: 43, longitude: 14), .init(latitude: 41, longitude: 16),
+                    .init(latitude: 39, longitude: 17), .init(latitude: 39, longitude: 14),
+                    .init(latitude: 41, longitude: 12), .init(latitude: 44, longitude: 10)
+                ],
+                color: waterColor,
+                stroke: waterColor,
+                opacity: opacity * 0.58,
+                lineWidth: 0.1
+            ),
+            GlobePolygon(
+                points: [
+                    .init(latitude: 41, longitude: 20), .init(latitude: 40, longitude: 24),
+                    .init(latitude: 39, longitude: 27), .init(latitude: 38, longitude: 29),
+                    .init(latitude: 37, longitude: 27), .init(latitude: 37, longitude: 23),
+                    .init(latitude: 38, longitude: 21), .init(latitude: 40, longitude: 20)
+                ],
+                color: waterColor,
+                stroke: waterColor,
+                opacity: opacity * 0.62,
+                lineWidth: 0.1
+            ),
+            GlobePolygon(
+                points: [
+                    .init(latitude: 46, longitude: 48), .init(latitude: 45, longitude: 51),
+                    .init(latitude: 44, longitude: 54), .init(latitude: 42, longitude: 54),
+                    .init(latitude: 40, longitude: 52), .init(latitude: 40, longitude: 49),
+                    .init(latitude: 42, longitude: 47), .init(latitude: 45, longitude: 47)
+                ],
+                color: waterColor,
+                stroke: waterColor,
+                opacity: opacity * 0.54,
+                lineWidth: 0.1
+            ),
+            GlobePolygon(
+                points: [
+                    .init(latitude: 51, longitude: -6), .init(latitude: 51, longitude: -2),
+                    .init(latitude: 50, longitude: 1), .init(latitude: 50, longitude: 3),
+                    .init(latitude: 49, longitude: 2), .init(latitude: 49, longitude: -1),
+                    .init(latitude: 50, longitude: -4), .init(latitude: 51, longitude: -6)
+                ],
+                color: waterColor,
+                stroke: waterColor,
+                opacity: opacity * 0.44,
+                lineWidth: 0.1
+            ),
+            GlobePolygon(
+                points: [
+                    .init(latitude: 58, longitude: 18), .init(latitude: 60, longitude: 22),
+                    .init(latitude: 62, longitude: 26), .init(latitude: 64, longitude: 29),
+                    .init(latitude: 63, longitude: 31), .init(latitude: 60, longitude: 29),
+                    .init(latitude: 58, longitude: 24), .init(latitude: 58, longitude: 18)
+                ],
+                color: waterColor,
+                stroke: waterColor,
+                opacity: opacity * 0.34,
+                lineWidth: 0.1
+            ),
+            GlobePolygon(
+                points: [
+                    .init(latitude: 38, longitude: 124), .init(latitude: 40, longitude: 129),
+                    .init(latitude: 41, longitude: 134), .init(latitude: 40, longitude: 139),
+                    .init(latitude: 37, longitude: 141), .init(latitude: 35, longitude: 136),
+                    .init(latitude: 36, longitude: 130), .init(latitude: 38, longitude: 124)
+                ],
+                color: waterColor,
+                stroke: waterColor,
+                opacity: opacity * 0.42,
+                lineWidth: 0.1
+            ),
+            GlobePolygon(
+                points: [
+                    .init(latitude: 20, longitude: 106), .init(latitude: 18, longitude: 111),
+                    .init(latitude: 16, longitude: 116), .init(latitude: 13, longitude: 118),
+                    .init(latitude: 10, longitude: 116), .init(latitude: 8, longitude: 112),
+                    .init(latitude: 10, longitude: 108), .init(latitude: 14, longitude: 106),
+                    .init(latitude: 18, longitude: 105)
+                ],
+                color: waterColor,
+                stroke: waterColor,
+                opacity: opacity * 0.38,
+                lineWidth: 0.1
+            )
+        ]
+    }
+
+    private static func secondaryCoastlines(for style: AtlasGlobeStyle, color: Color) -> [GlobeCoastline] {
+        guard style == .nightAtlas || style == .realGeography else { return [] }
+
+        let opacity = style == .nightAtlas ? 0.11 : 0.16
+        let width = style == .nightAtlas ? CGFloat(0.72) : CGFloat(0.68)
+
+        return [
+            GlobeCoastline(
+                points: [
+                    .init(latitude: 63, longitude: -22), .init(latitude: 66, longitude: -18),
+                    .init(latitude: 65, longitude: -14), .init(latitude: 63, longitude: -16),
+                    .init(latitude: 63, longitude: -22)
+                ],
+                color: color,
+                opacity: opacity,
+                lineWidth: width
+            ),
+            GlobeCoastline(
+                points: [
+                    .init(latitude: 54, longitude: -10), .init(latitude: 57, longitude: -7),
+                    .init(latitude: 58, longitude: -3), .init(latitude: 55, longitude: -2),
+                    .init(latitude: 51, longitude: -5), .init(latitude: 53, longitude: -9),
+                    .init(latitude: 54, longitude: -10)
+                ],
+                color: color,
+                opacity: opacity,
+                lineWidth: width
+            ),
+            GlobeCoastline(
+                points: [
+                    .init(latitude: 58, longitude: 5), .init(latitude: 61, longitude: 8),
+                    .init(latitude: 64, longitude: 12), .init(latitude: 67, longitude: 16),
+                    .init(latitude: 69, longitude: 22), .init(latitude: 67, longitude: 26),
+                    .init(latitude: 63, longitude: 24), .init(latitude: 60, longitude: 18),
+                    .init(latitude: 58, longitude: 12), .init(latitude: 58, longitude: 5)
+                ],
+                color: color,
+                opacity: opacity * 0.88,
+                lineWidth: width * 0.96
+            ),
+            GlobeCoastline(
+                points: [
+                    .init(latitude: 37, longitude: -9), .init(latitude: 42, longitude: -9),
+                    .init(latitude: 43, longitude: -1), .init(latitude: 40, longitude: 1),
+                    .init(latitude: 38, longitude: 7), .init(latitude: 41, longitude: 12),
+                    .init(latitude: 39, longitude: 16), .init(latitude: 37, longitude: 15),
+                    .init(latitude: 37, longitude: 24), .init(latitude: 35, longitude: 28),
+                    .init(latitude: 33, longitude: 25), .init(latitude: 37, longitude: 20),
+                    .init(latitude: 36, longitude: 13), .init(latitude: 39, longitude: 9),
+                    .init(latitude: 43, longitude: 4), .init(latitude: 43, longitude: -1),
+                    .init(latitude: 39, longitude: -2), .init(latitude: 37, longitude: -7),
+                    .init(latitude: 37, longitude: -9)
+                ],
+                color: color,
+                opacity: opacity * 0.92,
+                lineWidth: width
+            ),
+            GlobeCoastline(
+                points: [
+                    .init(latitude: 45, longitude: 12), .init(latitude: 43, longitude: 14),
+                    .init(latitude: 41, longitude: 16), .init(latitude: 39, longitude: 17),
+                    .init(latitude: 38, longitude: 15), .init(latitude: 40, longitude: 13),
+                    .init(latitude: 43, longitude: 12), .init(latitude: 45, longitude: 12)
+                ],
+                color: color,
+                opacity: opacity * 0.78,
+                lineWidth: width * 0.88
+            ),
+            GlobeCoastline(
+                points: [
+                    .init(latitude: 40, longitude: 20), .init(latitude: 39, longitude: 24),
+                    .init(latitude: 38, longitude: 27), .init(latitude: 37, longitude: 29),
+                    .init(latitude: 36, longitude: 27), .init(latitude: 37, longitude: 23),
+                    .init(latitude: 39, longitude: 20), .init(latitude: 40, longitude: 20)
+                ],
+                color: color,
+                opacity: opacity * 0.74,
+                lineWidth: width * 0.84
+            ),
+            GlobeCoastline(
+                points: [
+                    .init(latitude: 31, longitude: 34), .init(latitude: 27, longitude: 34),
+                    .init(latitude: 22, longitude: 36), .init(latitude: 18, longitude: 39),
+                    .init(latitude: 15, longitude: 42), .init(latitude: 12, longitude: 44),
+                    .init(latitude: 16, longitude: 51), .init(latitude: 24, longitude: 56),
+                    .init(latitude: 27, longitude: 52), .init(latitude: 28, longitude: 47),
+                    .init(latitude: 31, longitude: 42), .init(latitude: 31, longitude: 34)
+                ],
+                color: color,
+                opacity: opacity * 0.88,
+                lineWidth: width
+            ),
+            GlobeCoastline(
+                points: [
+                    .init(latitude: -12, longitude: 43), .init(latitude: -16, longitude: 44),
+                    .init(latitude: -20, longitude: 45), .init(latitude: -24, longitude: 46),
+                    .init(latitude: -20, longitude: 48), .init(latitude: -15, longitude: 47),
+                    .init(latitude: -12, longitude: 45), .init(latitude: -12, longitude: 43)
+                ],
+                color: color,
+                opacity: opacity * 0.66,
+                lineWidth: width * 0.82
+            ),
+            GlobeCoastline(
+                points: [
+                    .init(latitude: 36, longitude: 130), .init(latitude: 39, longitude: 141),
+                    .init(latitude: 35, longitude: 140), .init(latitude: 33, longitude: 136),
+                    .init(latitude: 31, longitude: 131), .init(latitude: 34, longitude: 130),
+                    .init(latitude: 36, longitude: 130)
+                ],
+                color: color,
+                opacity: opacity * 0.94,
+                lineWidth: width
+            ),
+            GlobeCoastline(
+                points: [
+                    .init(latitude: 7, longitude: 95), .init(latitude: 4, longitude: 100),
+                    .init(latitude: 1, longitude: 104), .init(latitude: -2, longitude: 108),
+                    .init(latitude: -4, longitude: 114), .init(latitude: -3, longitude: 120),
+                    .init(latitude: -5, longitude: 124), .init(latitude: -2, longitude: 128),
+                    .init(latitude: 1, longitude: 124), .init(latitude: 3, longitude: 118),
+                    .init(latitude: 4, longitude: 111), .init(latitude: 6, longitude: 104),
+                    .init(latitude: 7, longitude: 95)
+                ],
+                color: color,
+                opacity: opacity * 0.74,
+                lineWidth: width * 0.92
+            )
         ]
     }
 
@@ -1255,43 +2397,52 @@ private struct AtlasGlobeScene {
         return [
             GlobePolygon(
                 points: [
-                    .init(latitude: 72, longitude: -166), .init(latitude: 66, longitude: -150),
-                    .init(latitude: 60, longitude: -139), .init(latitude: 52, longitude: -128),
-                    .init(latitude: 48, longitude: -123), .init(latitude: 41, longitude: -122),
-                    .init(latitude: 32, longitude: -117), .init(latitude: 24, longitude: -110),
-                    .init(latitude: 18, longitude: -102), .init(latitude: 16, longitude: -94),
-                    .init(latitude: 21, longitude: -86), .init(latitude: 27, longitude: -81),
-                    .init(latitude: 31, longitude: -79), .init(latitude: 37, longitude: -75),
-                    .init(latitude: 44, longitude: -67), .init(latitude: 52, longitude: -61),
-                    .init(latitude: 58, longitude: -70), .init(latitude: 64, longitude: -83),
-                    .init(latitude: 69, longitude: -98), .init(latitude: 72, longitude: -120)
+                    .init(latitude: 72, longitude: -166), .init(latitude: 69, longitude: -156),
+                    .init(latitude: 64, longitude: -147), .init(latitude: 60, longitude: -141),
+                    .init(latitude: 56, longitude: -135), .init(latitude: 51, longitude: -128),
+                    .init(latitude: 49, longitude: -124), .init(latitude: 44, longitude: -124),
+                    .init(latitude: 38, longitude: -122), .init(latitude: 33, longitude: -118),
+                    .init(latitude: 27, longitude: -112), .init(latitude: 22, longitude: -106),
+                    .init(latitude: 18, longitude: -99), .init(latitude: 16, longitude: -93),
+                    .init(latitude: 19, longitude: -88), .init(latitude: 25, longitude: -83),
+                    .init(latitude: 30, longitude: -81), .init(latitude: 34, longitude: -78),
+                    .init(latitude: 40, longitude: -74), .init(latitude: 46, longitude: -67),
+                    .init(latitude: 52, longitude: -60), .init(latitude: 58, longitude: -62),
+                    .init(latitude: 63, longitude: -68), .init(latitude: 67, longitude: -79),
+                    .init(latitude: 70, longitude: -92), .init(latitude: 72, longitude: -108),
+                    .init(latitude: 73, longitude: -130)
                 ],
                 color: northAmericaColor,
                 stroke: stroke,
-                opacity: style == .nightAtlas ? 0.82 : 0.88,
+                opacity: style == .nightAtlas ? 0.72 : 0.88,
                 lineWidth: style == .nightAtlas ? 0.6 : 0.75
             ),
             GlobePolygon(
                 points: [
-                    .init(latitude: 12, longitude: -80), .init(latitude: 6, longitude: -77),
-                    .init(latitude: -2, longitude: -76), .init(latitude: -10, longitude: -74),
-                    .init(latitude: -18, longitude: -70), .init(latitude: -28, longitude: -66),
-                    .init(latitude: -38, longitude: -63), .init(latitude: -50, longitude: -69),
-                    .init(latitude: -54, longitude: -73), .init(latitude: -45, longitude: -75),
-                    .init(latitude: -28, longitude: -61), .init(latitude: -13, longitude: -54),
-                    .init(latitude: -2, longitude: -50), .init(latitude: 5, longitude: -54),
-                    .init(latitude: 8, longitude: -60), .init(latitude: 10, longitude: -67)
+                    .init(latitude: 12, longitude: -80), .init(latitude: 8, longitude: -78),
+                    .init(latitude: 3, longitude: -79), .init(latitude: -4, longitude: -78),
+                    .init(latitude: -11, longitude: -76), .init(latitude: -18, longitude: -73),
+                    .init(latitude: -24, longitude: -70), .init(latitude: -31, longitude: -68),
+                    .init(latitude: -39, longitude: -65), .init(latitude: -47, longitude: -67),
+                    .init(latitude: -54, longitude: -72), .init(latitude: -51, longitude: -75),
+                    .init(latitude: -42, longitude: -74), .init(latitude: -31, longitude: -71),
+                    .init(latitude: -21, longitude: -67), .init(latitude: -12, longitude: -61),
+                    .init(latitude: -4, longitude: -53), .init(latitude: 2, longitude: -49),
+                    .init(latitude: 7, longitude: -51), .init(latitude: 10, longitude: -58),
+                    .init(latitude: 11, longitude: -67)
                 ],
                 color: southAmericaColor,
                 stroke: stroke,
-                opacity: style == .nightAtlas ? 0.84 : 0.90,
+                opacity: style == .nightAtlas ? 0.74 : 0.90,
                 lineWidth: style == .nightAtlas ? 0.6 : 0.75
             ),
             GlobePolygon(
                 points: [
-                    .init(latitude: 71, longitude: -53), .init(latitude: 76, longitude: -44),
-                    .init(latitude: 74, longitude: -26), .init(latitude: 68, longitude: -20),
-                    .init(latitude: 61, longitude: -34), .init(latitude: 61, longitude: -49)
+                    .init(latitude: 60, longitude: -53), .init(latitude: 66, longitude: -48),
+                    .init(latitude: 72, longitude: -42), .init(latitude: 76, longitude: -34),
+                    .init(latitude: 75, longitude: -24), .init(latitude: 71, longitude: -18),
+                    .init(latitude: 65, longitude: -22), .init(latitude: 60, longitude: -33),
+                    .init(latitude: 58, longitude: -44)
                 ],
                 color: greenlandColor,
                 stroke: stroke,
@@ -1300,51 +2451,151 @@ private struct AtlasGlobeScene {
             ),
             GlobePolygon(
                 points: [
-                    .init(latitude: 71, longitude: -10), .init(latitude: 65, longitude: 12),
-                    .init(latitude: 58, longitude: 16), .init(latitude: 61, longitude: 26),
-                    .init(latitude: 58, longitude: 28), .init(latitude: 54, longitude: 44),
-                    .init(latitude: 58, longitude: 64), .init(latitude: 56, longitude: 90),
-                    .init(latitude: 50, longitude: 113), .init(latitude: 42, longitude: 132),
-                    .init(latitude: 34, longitude: 139), .init(latitude: 32, longitude: 124), .init(latitude: 24, longitude: 118),
-                    .init(latitude: 18, longitude: 108), .init(latitude: 10, longitude: 104),
-                    .init(latitude: 4, longitude: 97), .init(latitude: 5, longitude: 83),
-                    .init(latitude: 12, longitude: 73), .init(latitude: 8, longitude: 77),
-                    .init(latitude: 24, longitude: 66), .init(latitude: 28, longitude: 57),
-                    .init(latitude: 24, longitude: 52), .init(latitude: 14, longitude: 50),
-                    .init(latitude: 12, longitude: 44), .init(latitude: 18, longitude: 41),
-                    .init(latitude: 32, longitude: 47), .init(latitude: 36, longitude: 32),
-                    .init(latitude: 42, longitude: 28), .init(latitude: 44, longitude: 16),
-                    .init(latitude: 38, longitude: 8), .init(latitude: 43, longitude: 0),
-                    .init(latitude: 52, longitude: -6),
-                    .init(latitude: 58, longitude: -7),
-                    .init(latitude: 60, longitude: -12),
-                    .init(latitude: 52, longitude: -14), .init(latitude: 48, longitude: -10),
-                    .init(latitude: 43, longitude: -6),
-                    .init(latitude: 35, longitude: -10),
-                    .init(latitude: 18, longitude: 2), .init(latitude: 6, longitude: -5),
-                    .init(latitude: -8, longitude: 8), .init(latitude: -20, longitude: 17),
-                    .init(latitude: -32, longitude: 19), .init(latitude: -34, longitude: 25), .init(latitude: -35, longitude: 28),
-                    .init(latitude: -27, longitude: 39), .init(latitude: -10, longitude: 50),
-                    .init(latitude: 8, longitude: 44), .init(latitude: 20, longitude: 36),
-                    .init(latitude: 28, longitude: 28), .init(latitude: 35, longitude: 20)
+                    .init(latitude: 70, longitude: -10), .init(latitude: 71, longitude: 2),
+                    .init(latitude: 69, longitude: 12), .init(latitude: 66, longitude: 22),
+                    .init(latitude: 63, longitude: 31), .init(latitude: 62, longitude: 42),
+                    .init(latitude: 61, longitude: 58), .init(latitude: 59, longitude: 73),
+                    .init(latitude: 57, longitude: 88), .init(latitude: 54, longitude: 101),
+                    .init(latitude: 50, longitude: 113), .init(latitude: 45, longitude: 123),
+                    .init(latitude: 39, longitude: 131), .init(latitude: 34, longitude: 138),
+                    .init(latitude: 29, longitude: 132), .init(latitude: 24, longitude: 122),
+                    .init(latitude: 21, longitude: 115), .init(latitude: 17, longitude: 108),
+                    .init(latitude: 12, longitude: 103), .init(latitude: 10, longitude: 96),
+                    .init(latitude: 12, longitude: 88), .init(latitude: 16, longitude: 81),
+                    .init(latitude: 21, longitude: 73), .init(latitude: 26, longitude: 65),
+                    .init(latitude: 31, longitude: 57), .init(latitude: 35, longitude: 49),
+                    .init(latitude: 39, longitude: 40), .init(latitude: 43, longitude: 31),
+                    .init(latitude: 46, longitude: 22), .init(latitude: 48, longitude: 12),
+                    .init(latitude: 50, longitude: 4), .init(latitude: 53, longitude: -2),
+                    .init(latitude: 58, longitude: -6), .init(latitude: 64, longitude: -8)
                 ],
                 color: afroEurasiaColor,
                 stroke: stroke,
-                opacity: style == .nightAtlas ? 0.82 : 0.90,
+                opacity: style == .nightAtlas ? 0.58 : 0.90,
                 lineWidth: style == .nightAtlas ? 0.6 : 0.75
             ),
             GlobePolygon(
                 points: [
-                    .init(latitude: 58, longitude: -9), .init(latitude: 54, longitude: -3),
-                    .init(latitude: 51, longitude: 2), .init(latitude: 46, longitude: 8),
-                    .init(latitude: 44, longitude: 14), .init(latitude: 41, longitude: 18),
-                    .init(latitude: 43, longitude: 24), .init(latitude: 47, longitude: 19),
-                    .init(latitude: 51, longitude: 15), .init(latitude: 55, longitude: 8)
+                    .init(latitude: 37, longitude: -9), .init(latitude: 36, longitude: -5),
+                    .init(latitude: 35, longitude: -1), .init(latitude: 34, longitude: 4),
+                    .init(latitude: 33, longitude: 10), .init(latitude: 32, longitude: 17),
+                    .init(latitude: 31, longitude: 24), .init(latitude: 31, longitude: 31),
+                    .init(latitude: 29, longitude: 33), .init(latitude: 24, longitude: 33),
+                    .init(latitude: 19, longitude: 35), .init(latitude: 14, longitude: 40),
+                    .init(latitude: 10, longitude: 44), .init(latitude: 7, longitude: 49),
+                    .init(latitude: 2, longitude: 50), .init(latitude: -4, longitude: 44),
+                    .init(latitude: -9, longitude: 41), .init(latitude: -14, longitude: 40),
+                    .init(latitude: -20, longitude: 43), .init(latitude: -27, longitude: 38),
+                    .init(latitude: -32, longitude: 31), .init(latitude: -35, longitude: 23),
+                    .init(latitude: -35, longitude: 18), .init(latitude: -33, longitude: 14),
+                    .init(latitude: -29, longitude: 11), .init(latitude: -24, longitude: 13),
+                    .init(latitude: -18, longitude: 12), .init(latitude: -11, longitude: 8),
+                    .init(latitude: -4, longitude: 8), .init(latitude: 1, longitude: 10),
+                    .init(latitude: 5, longitude: 8), .init(latitude: 6, longitude: 3),
+                    .init(latitude: 7, longitude: -2), .init(latitude: 10, longitude: -6),
+                    .init(latitude: 14, longitude: -11), .init(latitude: 19, longitude: -16),
+                    .init(latitude: 24, longitude: -17), .init(latitude: 29, longitude: -14),
+                    .init(latitude: 33, longitude: -11), .init(latitude: 37, longitude: -9)
+                ],
+                color: afroEurasiaColor.opacity(style == .nightAtlas ? 0.94 : 1.0),
+                stroke: stroke,
+                opacity: style == .nightAtlas ? 0.70 : 0.90,
+                lineWidth: style == .nightAtlas ? 0.58 : 0.72
+            ),
+            GlobePolygon(
+                points: [
+                    .init(latitude: 30, longitude: 32), .init(latitude: 26, longitude: 36),
+                    .init(latitude: 21, longitude: 40), .init(latitude: 16, longitude: 42),
+                    .init(latitude: 13, longitude: 45), .init(latitude: 16, longitude: 50),
+                    .init(latitude: 22, longitude: 55), .init(latitude: 26, longitude: 56),
+                    .init(latitude: 29, longitude: 50), .init(latitude: 31, longitude: 43),
+                    .init(latitude: 30, longitude: 32)
+                ],
+                color: afroEurasiaColor.opacity(style == .nightAtlas ? 0.92 : 0.98),
+                stroke: stroke,
+                opacity: style == .nightAtlas ? 0.42 : 0.56,
+                lineWidth: style == .nightAtlas ? 0.45 : 0.6
+            ),
+            GlobePolygon(
+                points: [
+                    .init(latitude: 22, longitude: 68), .init(latitude: 18, longitude: 72),
+                    .init(latitude: 13, longitude: 76), .init(latitude: 9, longitude: 78),
+                    .init(latitude: 7, longitude: 77), .init(latitude: 9, longitude: 73),
+                    .init(latitude: 14, longitude: 71), .init(latitude: 20, longitude: 69),
+                    .init(latitude: 22, longitude: 68)
+                ],
+                color: afroEurasiaColor.opacity(style == .nightAtlas ? 0.94 : 0.98),
+                stroke: stroke,
+                opacity: style == .nightAtlas ? 0.40 : 0.54,
+                lineWidth: style == .nightAtlas ? 0.42 : 0.58
+            ),
+            GlobePolygon(
+                points: [
+                    .init(latitude: 58, longitude: -10), .init(latitude: 56, longitude: -3),
+                    .init(latitude: 54, longitude: 2), .init(latitude: 52, longitude: 8),
+                    .init(latitude: 49, longitude: 13), .init(latitude: 46, longitude: 17),
+                    .init(latitude: 43, longitude: 22), .init(latitude: 41, longitude: 27),
+                    .init(latitude: 43, longitude: 29), .init(latitude: 46, longitude: 25),
+                    .init(latitude: 49, longitude: 20), .init(latitude: 53, longitude: 14),
+                    .init(latitude: 57, longitude: 8)
                 ],
                 color: afroEurasiaColor.opacity(style == .nightAtlas ? 0.92 : 1.0),
                 stroke: stroke,
-                opacity: style == .nightAtlas ? 0.48 : 0.58,
+                opacity: style == .nightAtlas ? 0.40 : 0.58,
                 lineWidth: style == .nightAtlas ? 0.45 : 0.6
+            ),
+            GlobePolygon(
+                points: [
+                    .init(latitude: 70, longitude: 8), .init(latitude: 68, longitude: 15),
+                    .init(latitude: 66, longitude: 22), .init(latitude: 63, longitude: 28),
+                    .init(latitude: 60, longitude: 24), .init(latitude: 60, longitude: 15),
+                    .init(latitude: 63, longitude: 10), .init(latitude: 67, longitude: 7),
+                    .init(latitude: 70, longitude: 8)
+                ],
+                color: afroEurasiaColor.opacity(style == .nightAtlas ? 0.90 : 0.98),
+                stroke: stroke,
+                opacity: style == .nightAtlas ? 0.26 : 0.38,
+                lineWidth: style == .nightAtlas ? 0.34 : 0.46
+            ),
+            GlobePolygon(
+                points: [
+                    .init(latitude: 44, longitude: 12), .init(latitude: 43, longitude: 14),
+                    .init(latitude: 41, longitude: 16), .init(latitude: 39, longitude: 18),
+                    .init(latitude: 37, longitude: 17), .init(latitude: 38, longitude: 14),
+                    .init(latitude: 40, longitude: 12), .init(latitude: 43, longitude: 12),
+                    .init(latitude: 44, longitude: 12)
+                ],
+                color: afroEurasiaColor.opacity(style == .nightAtlas ? 0.92 : 0.98),
+                stroke: stroke,
+                opacity: style == .nightAtlas ? 0.22 : 0.34,
+                lineWidth: style == .nightAtlas ? 0.34 : 0.45
+            ),
+            GlobePolygon(
+                points: [
+                    .init(latitude: 38, longitude: 126), .init(latitude: 40, longitude: 129),
+                    .init(latitude: 38, longitude: 132), .init(latitude: 35, longitude: 131),
+                    .init(latitude: 34, longitude: 128), .init(latitude: 36, longitude: 126),
+                    .init(latitude: 38, longitude: 126)
+                ],
+                color: afroEurasiaColor.opacity(style == .nightAtlas ? 0.94 : 0.98),
+                stroke: stroke,
+                opacity: style == .nightAtlas ? 0.24 : 0.36,
+                lineWidth: style == .nightAtlas ? 0.34 : 0.46
+            ),
+            GlobePolygon(
+                points: [
+                    .init(latitude: 16, longitude: 96), .init(latitude: 13, longitude: 100),
+                    .init(latitude: 10, longitude: 103), .init(latitude: 8, longitude: 106),
+                    .init(latitude: 5, longitude: 108), .init(latitude: 2, longitude: 110),
+                    .init(latitude: -2, longitude: 112), .init(latitude: -4, longitude: 110),
+                    .init(latitude: -2, longitude: 106), .init(latitude: 1, longitude: 103),
+                    .init(latitude: 6, longitude: 100), .init(latitude: 10, longitude: 98),
+                    .init(latitude: 16, longitude: 96)
+                ],
+                color: afroEurasiaColor.opacity(style == .nightAtlas ? 0.94 : 0.98),
+                stroke: stroke,
+                opacity: style == .nightAtlas ? 0.26 : 0.38,
+                lineWidth: style == .nightAtlas ? 0.34 : 0.46
             ),
             GlobePolygon(
                 points: [
@@ -1359,44 +2610,47 @@ private struct AtlasGlobeScene {
             ),
             GlobePolygon(
                 points: [
-                    .init(latitude: -12, longitude: 113), .init(latitude: -18, longitude: 121),
-                    .init(latitude: -22, longitude: 132), .init(latitude: -30, longitude: 139),
-                    .init(latitude: -36, longitude: 149), .init(latitude: -41, longitude: 147),
-                    .init(latitude: -38, longitude: 132), .init(latitude: -31, longitude: 117),
-                    .init(latitude: -22, longitude: 113)
+                    .init(latitude: -12, longitude: 113), .init(latitude: -16, longitude: 118),
+                    .init(latitude: -21, longitude: 126), .init(latitude: -26, longitude: 133),
+                    .init(latitude: -32, longitude: 139), .init(latitude: -38, longitude: 146),
+                    .init(latitude: -41, longitude: 149), .init(latitude: -40, longitude: 141),
+                    .init(latitude: -37, longitude: 133), .init(latitude: -34, longitude: 125),
+                    .init(latitude: -28, longitude: 116), .init(latitude: -21, longitude: 113)
                 ],
                 color: australiaColor,
                 stroke: stroke,
-                opacity: style == .nightAtlas ? 0.80 : 0.88,
+                opacity: style == .nightAtlas ? 0.70 : 0.88,
                 lineWidth: style == .nightAtlas ? 0.55 : 0.72
             )
         ]
     }
 
     private static func continentBlobs(for style: AtlasGlobeStyle) -> [GlobeBlob] {
-        guard style != .nightAtlas && style != .realGeography else { return [] }
         let northAmericaColor: Color
         let southAmericaColor: Color
         let afroEurasiaColor: Color
         let eurasiaColor: Color
         let australiaColor: Color
         let iceColor: Color
+        let terrainOpacity: Double
 
         switch style {
         case .nightAtlas:
-            northAmericaColor = Color(red: 0.23, green: 0.31, blue: 0.18)
-            southAmericaColor = Color(red: 0.26, green: 0.35, blue: 0.20)
-            afroEurasiaColor = Color(red: 0.29, green: 0.35, blue: 0.19)
-            eurasiaColor = Color(red: 0.23, green: 0.29, blue: 0.17)
-            australiaColor = Color(red: 0.28, green: 0.24, blue: 0.15)
-            iceColor = Color(red: 0.62, green: 0.64, blue: 0.68)
+            northAmericaColor = Color(red: 0.20, green: 0.27, blue: 0.16)
+            southAmericaColor = Color(red: 0.18, green: 0.26, blue: 0.15)
+            afroEurasiaColor = Color(red: 0.26, green: 0.23, blue: 0.13)
+            eurasiaColor = Color(red: 0.19, green: 0.24, blue: 0.15)
+            australiaColor = Color(red: 0.24, green: 0.21, blue: 0.14)
+            iceColor = Color(red: 0.50, green: 0.54, blue: 0.58)
+            terrainOpacity = 0.07
         case .realGeography:
-            northAmericaColor = Color(red: 0.45, green: 0.58, blue: 0.31)
-            southAmericaColor = Color(red: 0.47, green: 0.61, blue: 0.32)
-            afroEurasiaColor = Color(red: 0.60, green: 0.61, blue: 0.35)
-            eurasiaColor = Color(red: 0.50, green: 0.58, blue: 0.33)
-            australiaColor = Color(red: 0.69, green: 0.53, blue: 0.31)
+            northAmericaColor = Color(red: 0.38, green: 0.50, blue: 0.28)
+            southAmericaColor = Color(red: 0.31, green: 0.49, blue: 0.26)
+            afroEurasiaColor = Color(red: 0.72, green: 0.66, blue: 0.42)
+            eurasiaColor = Color(red: 0.48, green: 0.56, blue: 0.32)
+            australiaColor = Color(red: 0.76, green: 0.57, blue: 0.34)
             iceColor = Color.white.opacity(0.86)
+            terrainOpacity = 0.16
         case .vintageExplorer:
             northAmericaColor = Color(red: 0.49, green: 0.38, blue: 0.25)
             southAmericaColor = Color(red: 0.54, green: 0.42, blue: 0.26)
@@ -1404,6 +2658,7 @@ private struct AtlasGlobeScene {
             eurasiaColor = Color(red: 0.50, green: 0.39, blue: 0.22)
             australiaColor = Color(red: 0.56, green: 0.42, blue: 0.24)
             iceColor = Color(red: 0.75, green: 0.67, blue: 0.54)
+            terrainOpacity = 0.42
         case .animeJourney:
             northAmericaColor = Color(red: 0.52, green: 0.72, blue: 0.56)
             southAmericaColor = Color(red: 0.57, green: 0.76, blue: 0.58)
@@ -1411,6 +2666,7 @@ private struct AtlasGlobeScene {
             eurasiaColor = Color(red: 0.57, green: 0.73, blue: 0.57)
             australiaColor = Color(red: 0.82, green: 0.64, blue: 0.46)
             iceColor = Color.white.opacity(0.92)
+            terrainOpacity = 0.42
         case .terrainExpedition:
             northAmericaColor = Color(red: 0.38, green: 0.47, blue: 0.26)
             southAmericaColor = Color(red: 0.47, green: 0.52, blue: 0.24)
@@ -1418,6 +2674,20 @@ private struct AtlasGlobeScene {
             eurasiaColor = Color(red: 0.46, green: 0.42, blue: 0.20)
             australiaColor = Color(red: 0.58, green: 0.47, blue: 0.23)
             iceColor = Color(red: 0.78, green: 0.82, blue: 0.78)
+            terrainOpacity = 0.40
+        }
+
+        if style == .nightAtlas || style == .realGeography {
+            let sizeScale: CGFloat = style == .nightAtlas ? 0.82 : 1.0
+            return [
+                GlobeBlob(latitude: 42, longitude: -112, size: 17.0 * sizeScale, aspect: 0.54, color: northAmericaColor, opacity: terrainOpacity, kind: .mountain),
+                GlobeBlob(latitude: 54, longitude: -105, size: 9.2 * sizeScale, aspect: 0.42, color: iceColor.opacity(style == .nightAtlas ? 0.62 : 0.84), opacity: terrainOpacity * 0.48, kind: .ice),
+                GlobeBlob(latitude: -32, longitude: -69, size: 10.0 * sizeScale, aspect: 1.10, color: southAmericaColor.opacity(0.82), opacity: terrainOpacity * 0.72, kind: .mountain),
+                GlobeBlob(latitude: 33, longitude: 81, size: 15.0 * sizeScale, aspect: 0.42, color: northAmericaColor.opacity(style == .nightAtlas ? 0.92 : 0.76), opacity: terrainOpacity * 0.72, kind: .plateau),
+                GlobeBlob(latitude: 28, longitude: 86, size: 10.0 * sizeScale, aspect: 0.48, color: northAmericaColor.opacity(style == .nightAtlas ? 0.84 : 0.70), opacity: terrainOpacity * 0.72, kind: .mountain),
+                GlobeBlob(latitude: 56, longitude: 90, size: 10.8 * sizeScale, aspect: 0.34, color: iceColor.opacity(style == .nightAtlas ? 0.46 : 0.64), opacity: terrainOpacity * 0.34, kind: .tundra),
+                GlobeBlob(latitude: 72, longitude: -41, size: 8.2 * sizeScale, aspect: 0.50, color: iceColor, opacity: terrainOpacity * 0.60, kind: .ice)
+            ]
         }
 
         return field(centerLat: 48, centerLon: -104, latRadius: 19, lonRadius: 34, rows: 14, cols: 18, baseSize: 7.6, color: northAmericaColor, opacity: 0.44, aspect: 0.68)
@@ -1428,9 +2698,211 @@ private struct AtlasGlobeScene {
         + field(centerLat: 72, centerLon: -40, latRadius: 7, lonRadius: 12, rows: 5, cols: 7, baseSize: 5.3, color: iceColor, opacity: 0.10, aspect: 0.58)
     }
 
+    private static func terrainPolygons(for style: AtlasGlobeStyle) -> [GlobePolygon] {
+        let desert: Color
+        let forest: Color
+        let jungle: Color
+        let plateau: Color
+        let tundra: Color
+        let ice: Color
+        let stroke: Color
+
+        switch style {
+        case .nightAtlas:
+            desert = Color(red: 0.38, green: 0.29, blue: 0.16)
+            forest = Color(red: 0.17, green: 0.27, blue: 0.18)
+            jungle = Color(red: 0.15, green: 0.30, blue: 0.19)
+            plateau = Color(red: 0.25, green: 0.25, blue: 0.18)
+            tundra = Color(red: 0.25, green: 0.30, blue: 0.28)
+            ice = Color(red: 0.60, green: 0.66, blue: 0.70)
+            stroke = Color.white.opacity(0.03)
+        case .realGeography:
+            desert = Color(red: 0.80, green: 0.69, blue: 0.40)
+            forest = Color(red: 0.30, green: 0.50, blue: 0.27)
+            jungle = Color(red: 0.24, green: 0.52, blue: 0.29)
+            plateau = Color(red: 0.58, green: 0.52, blue: 0.31)
+            tundra = Color(red: 0.62, green: 0.72, blue: 0.64)
+            ice = Color.white.opacity(0.88)
+            stroke = Color.white.opacity(0.05)
+        default:
+            return []
+        }
+
+        let opacity = style == .nightAtlas ? 0.17 : 0.28
+        let microOpacity = style == .nightAtlas ? 0.12 : 0.20
+
+        return [
+            GlobePolygon(
+                points: [
+                    .init(latitude: 31, longitude: -16), .init(latitude: 31, longitude: -5),
+                    .init(latitude: 30, longitude: 7), .init(latitude: 28, longitude: 18),
+                    .init(latitude: 26, longitude: 28), .init(latitude: 24, longitude: 34),
+                    .init(latitude: 20, longitude: 31), .init(latitude: 18, longitude: 22),
+                    .init(latitude: 17, longitude: 10), .init(latitude: 18, longitude: -1),
+                    .init(latitude: 22, longitude: -10), .init(latitude: 27, longitude: -16)
+                ],
+                color: desert,
+                stroke: stroke,
+                opacity: opacity,
+                lineWidth: 0.28
+            ),
+            GlobePolygon(
+                points: [
+                    .init(latitude: 29, longitude: 36), .init(latitude: 28, longitude: 42),
+                    .init(latitude: 26, longitude: 49), .init(latitude: 23, longitude: 55),
+                    .init(latitude: 18, longitude: 55), .init(latitude: 16, longitude: 49),
+                    .init(latitude: 17, longitude: 42), .init(latitude: 21, longitude: 37),
+                    .init(latitude: 26, longitude: 35)
+                ],
+                color: desert,
+                stroke: stroke,
+                opacity: opacity * 0.94,
+                lineWidth: 0.28
+            ),
+            GlobePolygon(
+                points: [
+                    .init(latitude: 4, longitude: 10), .init(latitude: 5, longitude: 16),
+                    .init(latitude: 4, longitude: 22), .init(latitude: 2, longitude: 27),
+                    .init(latitude: -2, longitude: 31), .init(latitude: -5, longitude: 29),
+                    .init(latitude: -6, longitude: 22), .init(latitude: -4, longitude: 15),
+                    .init(latitude: -1, longitude: 11)
+                ],
+                color: jungle,
+                stroke: stroke,
+                opacity: opacity * 0.86,
+                lineWidth: 0.26
+            ),
+            GlobePolygon(
+                points: [
+                    .init(latitude: 46, longitude: -3), .init(latitude: 48, longitude: 4),
+                    .init(latitude: 50, longitude: 12), .init(latitude: 51, longitude: 20),
+                    .init(latitude: 52, longitude: 28), .init(latitude: 56, longitude: 32),
+                    .init(latitude: 58, longitude: 24), .init(latitude: 56, longitude: 14),
+                    .init(latitude: 53, longitude: 5), .init(latitude: 50, longitude: -1)
+                ],
+                color: forest,
+                stroke: stroke,
+                opacity: microOpacity,
+                lineWidth: 0.24
+            ),
+            GlobePolygon(
+                points: [
+                    .init(latitude: 27, longitude: 72), .init(latitude: 31, longitude: 78),
+                    .init(latitude: 34, longitude: 86), .init(latitude: 36, longitude: 93),
+                    .init(latitude: 33, longitude: 98), .init(latitude: 29, longitude: 94),
+                    .init(latitude: 26, longitude: 86), .init(latitude: 26, longitude: 77)
+                ],
+                color: plateau,
+                stroke: stroke,
+                opacity: microOpacity * 1.05,
+                lineWidth: 0.24
+            ),
+            GlobePolygon(
+                points: [
+                    .init(latitude: 56, longitude: 58), .init(latitude: 58, longitude: 76),
+                    .init(latitude: 60, longitude: 94), .init(latitude: 62, longitude: 110),
+                    .init(latitude: 61, longitude: 124), .init(latitude: 58, longitude: 126),
+                    .init(latitude: 55, longitude: 108), .init(latitude: 54, longitude: 88),
+                    .init(latitude: 54, longitude: 68)
+                ],
+                color: tundra,
+                stroke: stroke,
+                opacity: microOpacity * 0.86,
+                lineWidth: 0.24
+            ),
+            GlobePolygon(
+                points: [
+                    .init(latitude: 66, longitude: -54), .init(latitude: 70, longitude: -46),
+                    .init(latitude: 75, longitude: -38), .init(latitude: 76, longitude: -28),
+                    .init(latitude: 72, longitude: -22), .init(latitude: 66, longitude: -26),
+                    .init(latitude: 63, longitude: -36), .init(latitude: 63, longitude: -48)
+                ],
+                color: ice,
+                stroke: stroke,
+                opacity: microOpacity * 0.92,
+                lineWidth: 0.24
+            )
+        ]
+    }
+
     private static func lightBlobs(for style: AtlasGlobeStyle) -> [GlobeLight] {
         guard style != .realGeography else { return [] }
         let baseColor: Color = style == .animeJourney ? Color.white : AtlasColor.paleGold
+
+        if style == .nightAtlas {
+            let europeBelt = scatteredLights(
+                points: [(54, -2), (52, 1), (51, 5), (50, 8), (49, 12), (47, 15), (45, 10), (43, 14), (41, 19), (40, 24), (39, 29)],
+                size: 2.9,
+                color: baseColor
+            )
+            let mediterranean = scatteredLights(
+                points: [(38, -3), (40, 1), (41, 5), (41, 10), (39, 15), (36, 19), (33, 23), (31, 31)],
+                size: 2.55,
+                color: baseColor
+            )
+            let nileAndAfrica = scatteredLights(
+                points: [(30, 31), (24, 32), (14, -17), (9, 7), (6, 3), (-1, 15), (-6, 39), (-26, 28), (-34, 18)],
+                size: 2.35,
+                color: baseColor
+            )
+            let gulfAndIndia = scatteredLights(
+                points: [(25, 55), (24, 46), (28, 77), (23, 72), (19, 73), (13, 80), (22, 88)],
+                size: 2.7,
+                color: baseColor
+            )
+            let eastAsia = scatteredLights(
+                points: [(39, 116), (31, 121), (23, 113), (25, 121), (35, 139), (34, 135), (14, 100), (10, 106), (16, 108)],
+                size: 2.7,
+                color: baseColor
+            )
+            let atlanticRim = scatteredLights(
+                points: [(40, -74), (34, -118), (-12, -77), (-23, -46), (-34, -58)],
+                size: 2.4,
+                color: baseColor
+            )
+            let iberiaAndUk = scatteredLights(
+                points: [(57, -3), (54, -1), (51, -0.2), (53, -6), (43, -8), (40, -3), (39, 2), (38, -1)],
+                size: 2.45,
+                color: baseColor
+            )
+            let centralAfrica = scatteredLights(
+                points: [(6, 3), (5, 9), (0, 15), (-4, 15), (-6, 24), (-1, 37), (-15, 28), (-26, 32)],
+                size: 2.2,
+                color: baseColor
+            )
+            let gulfSpine = scatteredLights(
+                points: [(29, 48), (26, 50), (25, 55), (24, 58), (21, 57), (24, 67), (31, 35)],
+                size: 2.5,
+                color: baseColor
+            )
+            let indoPacific = scatteredLights(
+                points: [(1, 104), (14, 101), (10, 106), (16, 108), (22, 114), (25, 121), (35, 129)],
+                size: 2.3,
+                color: baseColor
+            )
+            let westEuropeCoast = coastalLights(
+                points: [(58, -4), (55, -2), (52, 1), (49, 2), (46, 0), (43, -1), (40, 0), (37, 2)],
+                size: 2.5,
+                color: baseColor
+            )
+            let mediterraneanArc = coastalLights(
+                points: [(41, 5), (41, 10), (39, 14), (37, 17), (35, 22), (32, 28), (31, 31)],
+                size: 2.25,
+                color: baseColor
+            )
+            let eastAfricaCoast = coastalLights(
+                points: [(12, 43), (6, 39), (-1, 41), (-6, 39), (-16, 40), (-29, 32)],
+                size: 2.15,
+                color: baseColor
+            )
+            let eastAsiaCoast = coastalLights(
+                points: [(39, 121), (34, 122), (30, 122), (25, 121), (22, 120), (19, 118), (15, 108)],
+                size: 2.35,
+                color: baseColor
+            )
+            return europeBelt + mediterranean + nileAndAfrica + gulfAndIndia + eastAsia + atlanticRim + iberiaAndUk + centralAfrica + gulfSpine + indoPacific + westEuropeCoast + mediterraneanArc + eastAfricaCoast + eastAsiaCoast
+        }
+
         let densityBoost: CGFloat = style == .nightAtlas ? 1.15 : 1.0
         let europe = lights(centerLat: 50, centerLon: 6, latRadius: 9, lonRadius: 16, rows: 10, cols: 16, size: 3.8 * densityBoost, color: baseColor)
         let eastCoast = lights(centerLat: 40, centerLon: -74, latRadius: 9, lonRadius: 13, rows: 10, cols: 12, size: 3.5 * densityBoost, color: baseColor)
@@ -1441,8 +2913,51 @@ private struct AtlasGlobeScene {
         let mediterranean = style == .nightAtlas ? lights(centerLat: 36, centerLon: 18, latRadius: 6, lonRadius: 18, rows: 5, cols: 12, size: 2.8, color: baseColor) : []
         let gulf = style == .nightAtlas ? lights(centerLat: 26, centerLon: 50, latRadius: 4, lonRadius: 8, rows: 4, cols: 8, size: 3.1, color: baseColor) : []
         let japan = style == .nightAtlas ? lights(centerLat: 36, centerLon: 139, latRadius: 7, lonRadius: 6, rows: 5, cols: 6, size: 3.0, color: baseColor) : []
+        let westEuropeCoast = style == .nightAtlas ? coastalLights(
+            points: [(58, -4), (55, -2), (52, 1), (49, 2), (46, 0), (43, -1), (40, 0), (37, 2)],
+            size: 2.7,
+            color: baseColor
+        ) : []
+        let eastAsiaCoast = style == .nightAtlas ? coastalLights(
+            points: [(39, 121), (34, 122), (30, 122), (25, 121), (22, 120), (19, 118), (15, 108)],
+            size: 2.5,
+            color: baseColor
+        ) : []
 
-        return europe + eastCoast + eastAsia + india + africa + brazil + mediterranean + gulf + japan
+        return europe + eastCoast + eastAsia + india + africa + brazil + mediterranean + gulf + japan + westEuropeCoast + eastAsiaCoast
+    }
+
+    private static func coastalLights(
+        points: [(Double, Double)],
+        size: CGFloat,
+        color: Color
+    ) -> [GlobeLight] {
+        points.enumerated().map { index, point in
+            let wobble = sin(Double(index) * 1.7) * 0.45
+            return GlobeLight(
+                latitude: point.0 + wobble * 0.4,
+                longitude: point.1 - wobble * 0.5,
+                size: size + CGFloat(cos(Double(index) * 1.3)) * 0.18,
+                color: color
+            )
+        }
+    }
+
+    private static func scatteredLights(
+        points: [(Double, Double)],
+        size: CGFloat,
+        color: Color
+    ) -> [GlobeLight] {
+        points.enumerated().map { index, point in
+            let latitudeOffset = sin(Double(index) * 1.31) * 0.35
+            let longitudeOffset = cos(Double(index) * 1.17) * 0.45
+            return GlobeLight(
+                latitude: point.0 + latitudeOffset,
+                longitude: point.1 + longitudeOffset,
+                size: size + CGFloat(sin(Double(index) * 0.9)) * 0.22,
+                color: color
+            )
+        }
     }
 
     private static func field(

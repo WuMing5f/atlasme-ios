@@ -68,6 +68,161 @@ enum AtlasGlobeStyle: String, CaseIterable {
     var isPremium: Bool {
         self != .realGeography
     }
+
+    var defaultLayerStack: AtlasGlobeLayerStack {
+        switch self {
+        case .nightAtlas:
+            return .nightAtlas
+        case .realGeography:
+            return .realGeography
+        case .vintageExplorer:
+            return .vintageExplorer
+        case .animeJourney:
+            return .animeJourney
+        case .terrainExpedition:
+            return .terrainExpedition
+        }
+    }
+}
+
+enum AtlasGlobeLayerID: String, CaseIterable {
+    case sphereShadow = "sphere_shadow"
+    case atmosphereHalo = "atmosphere_halo"
+    case dayNightTerminator = "day_night_terminator"
+    case oceanBase = "ocean_base"
+    case oceanDepth = "ocean_depth"
+    case oceanSpecular = "ocean_specular"
+    case continentMass = "continent_mass"
+    case coastlinePrimary = "coastline_primary"
+    case coastlineSecondary = "coastline_secondary"
+    case terrainMacro = "terrain_macro"
+    case terrainMicro = "terrain_micro"
+    case cryosphere = "cryosphere"
+    case cloudGlobal = "cloud_global"
+    case cloudDetail = "cloud_detail"
+    case aerialHaze = "aerial_haze"
+    case nightPowerGrid = "night_power_grid"
+    case cityClusters = "city_clusters"
+    case mobilityRoutes = "mobility_routes"
+    case mobilityNodes = "mobility_nodes"
+    case memoryHeat = "memory_heat"
+    case mediaAnchors = "media_anchors"
+    case discoveryAnchors = "discovery_anchors"
+    case achievementOverlays = "achievement_overlays"
+    case skinAndModeOverlays = "skin_and_mode_overlays"
+}
+
+enum AtlasGlobeLayerCategory: String {
+    case foundation
+    case geography
+    case atmosphere
+    case humanWorld
+    case personalStory
+    case product
+}
+
+struct AtlasGlobeLayerDescriptor: Identifiable {
+    let id: AtlasGlobeLayerID
+    let category: AtlasGlobeLayerCategory
+    let title: String
+    let detail: String
+    let enabledByDefault: Bool
+}
+
+struct AtlasGlobeLayerStack {
+    let style: AtlasGlobeStyle
+    let layers: [AtlasGlobeLayerDescriptor]
+
+    static let nightAtlas = AtlasGlobeLayerStack(
+        style: .nightAtlas,
+        layers: [
+            .init(id: .sphereShadow, category: .foundation, title: "Sphere Shadow", detail: "Grounds the globe against the page.", enabledByDefault: true),
+            .init(id: .atmosphereHalo, category: .foundation, title: "Atmosphere Halo", detail: "Outer air glow and brand mood.", enabledByDefault: true),
+            .init(id: .dayNightTerminator, category: .foundation, title: "Night Terminator", detail: "Shapes the dark-side read of the planet.", enabledByDefault: true),
+            .init(id: .oceanBase, category: .foundation, title: "Ocean Base", detail: "Primary water body and hue.", enabledByDefault: true),
+            .init(id: .oceanDepth, category: .foundation, title: "Ocean Depth", detail: "Deep-water contrast and basin falloff.", enabledByDefault: true),
+            .init(id: .oceanSpecular, category: .foundation, title: "Ocean Specular", detail: "Water sheen and reflected light.", enabledByDefault: true),
+            .init(id: .continentMass, category: .geography, title: "Continent Mass", detail: "Readable land silhouettes.", enabledByDefault: true),
+            .init(id: .coastlinePrimary, category: .geography, title: "Primary Coastlines", detail: "Main coast recognition.", enabledByDefault: true),
+            .init(id: .coastlineSecondary, category: .geography, title: "Secondary Coastlines", detail: "Smaller breakups and island edges.", enabledByDefault: false),
+            .init(id: .terrainMacro, category: .geography, title: "Macro Terrain", detail: "Large desert, forest, and mountain zones.", enabledByDefault: false),
+            .init(id: .cloudGlobal, category: .atmosphere, title: "Global Clouds", detail: "Broad cloud systems.", enabledByDefault: true),
+            .init(id: .aerialHaze, category: .atmosphere, title: "Aerial Haze", detail: "Low-contrast atmospheric depth.", enabledByDefault: true),
+            .init(id: .nightPowerGrid, category: .humanWorld, title: "Night Power Grid", detail: "Civilization lights and power belts.", enabledByDefault: true),
+            .init(id: .cityClusters, category: .humanWorld, title: "City Clusters", detail: "Metro nodes and urban glow.", enabledByDefault: true),
+            .init(id: .mobilityRoutes, category: .humanWorld, title: "Mobility Routes", detail: "Flights, trains, walking, and replay paths.", enabledByDefault: true),
+            .init(id: .mobilityNodes, category: .humanWorld, title: "Mobility Nodes", detail: "Departures, arrivals, and hubs.", enabledByDefault: true),
+            .init(id: .mediaAnchors, category: .personalStory, title: "Media Anchors", detail: "Photo stacks and memory cards.", enabledByDefault: false),
+            .init(id: .discoveryAnchors, category: .personalStory, title: "Discovery Anchors", detail: "Clues, recommendations, and wishlist prompts.", enabledByDefault: false),
+            .init(id: .achievementOverlays, category: .personalStory, title: "Achievement Overlays", detail: "Badges and milestones.", enabledByDefault: false),
+            .init(id: .skinAndModeOverlays, category: .product, title: "Skin and Mode Overlays", detail: "Signature look and premium presentation.", enabledByDefault: true)
+        ]
+    )
+
+    static let realGeography = AtlasGlobeLayerStack(
+        style: .realGeography,
+        layers: [
+            .init(id: .sphereShadow, category: .foundation, title: "Sphere Shadow", detail: "Grounds the globe against the page.", enabledByDefault: true),
+            .init(id: .atmosphereHalo, category: .foundation, title: "Atmosphere Halo", detail: "Air glow and daylight edge.", enabledByDefault: true),
+            .init(id: .oceanBase, category: .foundation, title: "Ocean Base", detail: "Primary water tone.", enabledByDefault: true),
+            .init(id: .oceanDepth, category: .foundation, title: "Ocean Depth", detail: "Shelf and abyss contrast.", enabledByDefault: true),
+            .init(id: .oceanSpecular, category: .foundation, title: "Ocean Specular", detail: "Sunlit water sheen.", enabledByDefault: true),
+            .init(id: .continentMass, category: .geography, title: "Continent Mass", detail: "Readable land silhouettes.", enabledByDefault: true),
+            .init(id: .coastlinePrimary, category: .geography, title: "Primary Coastlines", detail: "Main coast recognition.", enabledByDefault: true),
+            .init(id: .coastlineSecondary, category: .geography, title: "Secondary Coastlines", detail: "Smaller coast breaks.", enabledByDefault: true),
+            .init(id: .terrainMacro, category: .geography, title: "Macro Terrain", detail: "Large climate and landform zones.", enabledByDefault: true),
+            .init(id: .terrainMicro, category: .geography, title: "Micro Terrain", detail: "Ridges, dunes, plains texture.", enabledByDefault: false),
+            .init(id: .cryosphere, category: .geography, title: "Cryosphere", detail: "Ice caps and glacier zones.", enabledByDefault: true),
+            .init(id: .cloudGlobal, category: .atmosphere, title: "Global Clouds", detail: "Broad cloud cover.", enabledByDefault: true),
+            .init(id: .cloudDetail, category: .atmosphere, title: "Cloud Detail", detail: "Smaller cloud fragments.", enabledByDefault: false),
+            .init(id: .mobilityRoutes, category: .humanWorld, title: "Mobility Routes", detail: "Optional route display over geography.", enabledByDefault: true),
+            .init(id: .mobilityNodes, category: .humanWorld, title: "Mobility Nodes", detail: "Trip start and end nodes.", enabledByDefault: true),
+            .init(id: .skinAndModeOverlays, category: .product, title: "Skin and Mode Overlays", detail: "Mode presentation wrapper.", enabledByDefault: true)
+        ]
+    )
+
+    static let vintageExplorer = AtlasGlobeLayerStack(
+        style: .vintageExplorer,
+        layers: [
+            .init(id: .sphereShadow, category: .foundation, title: "Sphere Shadow", detail: "Grounds the globe against the page.", enabledByDefault: true),
+            .init(id: .continentMass, category: .geography, title: "Continent Mass", detail: "Stylized land silhouettes.", enabledByDefault: true),
+            .init(id: .coastlinePrimary, category: .geography, title: "Primary Coastlines", detail: "Ink edges for the world shape.", enabledByDefault: true),
+            .init(id: .mobilityRoutes, category: .humanWorld, title: "Mobility Routes", detail: "Ink and expedition paths.", enabledByDefault: true),
+            .init(id: .mobilityNodes, category: .humanWorld, title: "Mobility Nodes", detail: "Ports and route stops.", enabledByDefault: true),
+            .init(id: .skinAndModeOverlays, category: .product, title: "Skin and Mode Overlays", detail: "Collector and paper-world treatment.", enabledByDefault: true)
+        ]
+    )
+
+    static let animeJourney = AtlasGlobeLayerStack(
+        style: .animeJourney,
+        layers: [
+            .init(id: .sphereShadow, category: .foundation, title: "Sphere Shadow", detail: "Grounds the globe against the page.", enabledByDefault: true),
+            .init(id: .atmosphereHalo, category: .foundation, title: "Atmosphere Halo", detail: "Soft cinematic bloom.", enabledByDefault: true),
+            .init(id: .oceanBase, category: .foundation, title: "Ocean Base", detail: "Bright stylized water.", enabledByDefault: true),
+            .init(id: .continentMass, category: .geography, title: "Continent Mass", detail: "Soft land masses.", enabledByDefault: true),
+            .init(id: .cloudGlobal, category: .atmosphere, title: "Global Clouds", detail: "Dreamy cloud sweep.", enabledByDefault: true),
+            .init(id: .cityClusters, category: .humanWorld, title: "City Clusters", detail: "Soft urban highlights.", enabledByDefault: true),
+            .init(id: .mobilityRoutes, category: .humanWorld, title: "Mobility Routes", detail: "Playful route paths.", enabledByDefault: true),
+            .init(id: .mediaAnchors, category: .personalStory, title: "Media Anchors", detail: "Photo and story callouts.", enabledByDefault: false),
+            .init(id: .skinAndModeOverlays, category: .product, title: "Skin and Mode Overlays", detail: "Seasonal and dreamy skin treatment.", enabledByDefault: true)
+        ]
+    )
+
+    static let terrainExpedition = AtlasGlobeLayerStack(
+        style: .terrainExpedition,
+        layers: [
+            .init(id: .sphereShadow, category: .foundation, title: "Sphere Shadow", detail: "Grounds the globe against the page.", enabledByDefault: true),
+            .init(id: .oceanBase, category: .foundation, title: "Ocean Base", detail: "Muted expedition water tone.", enabledByDefault: true),
+            .init(id: .continentMass, category: .geography, title: "Continent Mass", detail: "Base land silhouettes.", enabledByDefault: true),
+            .init(id: .coastlinePrimary, category: .geography, title: "Primary Coastlines", detail: "Readable shore edges.", enabledByDefault: true),
+            .init(id: .terrainMacro, category: .geography, title: "Macro Terrain", detail: "Mountains, deserts, forests.", enabledByDefault: true),
+            .init(id: .terrainMicro, category: .geography, title: "Micro Terrain", detail: "Topographic detail and ridgelines.", enabledByDefault: true),
+            .init(id: .mobilityRoutes, category: .humanWorld, title: "Mobility Routes", detail: "Adventure routes and road lines.", enabledByDefault: true),
+            .init(id: .mobilityNodes, category: .humanWorld, title: "Mobility Nodes", detail: "Route checkpoints.", enabledByDefault: true),
+            .init(id: .discoveryAnchors, category: .personalStory, title: "Discovery Anchors", detail: "Hiking clues and adventure prompts.", enabledByDefault: false),
+            .init(id: .skinAndModeOverlays, category: .product, title: "Skin and Mode Overlays", detail: "Adventure skin wrapper.", enabledByDefault: true)
+        ]
+    )
 }
 
 struct AtlasCopy {
