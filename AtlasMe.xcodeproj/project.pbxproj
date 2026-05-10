@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		161F7C920A6396E0560F3AA9 /* AtlasMeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44CD88B1EA1B1AD229D8F4C6 /* AtlasMeUITests.swift */; };
 		5687D73B932FC5037FF44681 /* AtlasMeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AE57A64F1725880C9EECA6C /* AtlasMeApp.swift */; };
 		65DD700EB8D618CAE9284027 /* AtlasComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82CC936DCE9CEF2CE12788EC /* AtlasComponents.swift */; };
 		69023ECEE7EA669BD93C71D8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = ED79A2E8CC1FE95E360DAA74 /* Assets.xcassets */; };
@@ -15,13 +16,26 @@
 		F39B79DAB1C5772A8457D0FC /* AtlasScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD8DB3FF6C628BF4AAEDDBE7 /* AtlasScreens.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		1FC9F83DDB6CCE0F74858C80 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5048AB1CE9D234C68247E494 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C5AFBE7F8C6803A00870CE0A;
+			remoteInfo = AtlasMe;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		0D49A9C9CD3F362971B60203 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		44CD88B1EA1B1AD229D8F4C6 /* AtlasMeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AtlasMeUITests.swift; sourceTree = "<group>"; };
 		7AE57A64F1725880C9EECA6C /* AtlasMeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AtlasMeApp.swift; sourceTree = "<group>"; };
 		82CC936DCE9CEF2CE12788EC /* AtlasComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AtlasComponents.swift; sourceTree = "<group>"; };
 		8C7E136A3314FCC353D059B2 /* AtlasRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AtlasRootView.swift; sourceTree = "<group>"; };
 		A4537F19CB702FE2E5D6FD95 /* AtlasMe.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = AtlasMe.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A7063D72C67E2EF80D631E67 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		AD8DB3FF6C628BF4AAEDDBE7 /* AtlasScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AtlasScreens.swift; sourceTree = "<group>"; };
+		B6D9FE6BF00312952E537A94 /* AtlasMeUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = AtlasMeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED79A2E8CC1FE95E360DAA74 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F1FF3ABE0290D2BC6E0D1A0E /* AtlasModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AtlasModels.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -31,6 +45,7 @@
 			isa = PBXGroup;
 			children = (
 				A4537F19CB702FE2E5D6FD95 /* AtlasMe.app */,
+				B6D9FE6BF00312952E537A94 /* AtlasMeUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -39,6 +54,7 @@
 			isa = PBXGroup;
 			children = (
 				7F08F61501CD6848C2CAC291 /* AtlasMe */,
+				D657451670F19A1319374AA3 /* AtlasMeUITests */,
 				3F6B0E15FE1964BB22C62AE2 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -57,9 +73,36 @@
 			path = AtlasMe;
 			sourceTree = "<group>";
 		};
+		D657451670F19A1319374AA3 /* AtlasMeUITests */ = {
+			isa = PBXGroup;
+			children = (
+				44CD88B1EA1B1AD229D8F4C6 /* AtlasMeUITests.swift */,
+				0D49A9C9CD3F362971B60203 /* Info.plist */,
+			);
+			path = AtlasMeUITests;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		C4AB47DAE69988954F1AD775 /* AtlasMeUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 983D7A0457570C564D8EE31F /* Build configuration list for PBXNativeTarget "AtlasMeUITests" */;
+			buildPhases = (
+				6D9B7CD4770D53BA32AE7298 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				17318637E98BE134FE538BC1 /* PBXTargetDependency */,
+			);
+			name = AtlasMeUITests;
+			packageProductDependencies = (
+			);
+			productName = AtlasMeUITests;
+			productReference = B6D9FE6BF00312952E537A94 /* AtlasMeUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		C5AFBE7F8C6803A00870CE0A /* AtlasMe */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 2C8D199F1CEB8A41E50BF442 /* Build configuration list for PBXNativeTarget "AtlasMe" */;
@@ -87,6 +130,11 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
+					C4AB47DAE69988954F1AD775 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+						TestTargetID = C5AFBE7F8C6803A00870CE0A;
+					};
 					C5AFBE7F8C6803A00870CE0A = {
 						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
@@ -108,6 +156,7 @@
 			projectRoot = "";
 			targets = (
 				C5AFBE7F8C6803A00870CE0A /* AtlasMe */,
+				C4AB47DAE69988954F1AD775 /* AtlasMeUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -124,6 +173,14 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		6D9B7CD4770D53BA32AE7298 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				161F7C920A6396E0560F3AA9 /* AtlasMeUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		DB4AE8B99FA9121884F836A9 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -137,6 +194,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		17318637E98BE134FE538BC1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C5AFBE7F8C6803A00870CE0A /* AtlasMe */;
+			targetProxy = 1FC9F83DDB6CCE0F74858C80 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		10B2E98195AB1E2EAB7777AE /* Release */ = {
@@ -237,6 +302,29 @@
 			};
 			name = Debug;
 		};
+		817B390FEEDDAD49DD40DE45 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = AtlasMeUITests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.atlasme.ios.ui-tests";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.10;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AtlasMe.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/AtlasMe";
+				TEST_TARGET_NAME = AtlasMe;
+			};
+			name = Debug;
+		};
 		91EBA5F455E99B5A9407E821 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -300,6 +388,29 @@
 			};
 			name = Debug;
 		};
+		F3FA2BBD4A022F3B8230B575 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = AtlasMeUITests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.atlasme.ios.ui-tests";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.10;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AtlasMe.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/AtlasMe";
+				TEST_TARGET_NAME = AtlasMe;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -317,6 +428,15 @@
 			buildConfigurations = (
 				91EBA5F455E99B5A9407E821 /* Debug */,
 				10B2E98195AB1E2EAB7777AE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		983D7A0457570C564D8EE31F /* Build configuration list for PBXNativeTarget "AtlasMeUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				817B390FEEDDAD49DD40DE45 /* Debug */,
+				F3FA2BBD4A022F3B8230B575 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

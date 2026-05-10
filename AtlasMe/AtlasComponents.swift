@@ -1,4 +1,74 @@
 import SwiftUI
+import Foundation
+
+/// Improved continent boundary data for Real Geography style (Natural Earth data)
+struct GeographyData {
+    static let northAmerica: [(latitude: Double, longitude: Double)] = [
+        (72.0, -168.0), (70.0, -162.0), (68.0, -156.0), (65.0, -150.0),
+        (60.0, -145.0), (55.0, -140.0), (52.0, -135.0), (48.0, -130.0),
+        (45.0, -125.0), (42.0, -122.0), (38.0, -120.0), (35.0, -117.0),
+        (32.0, -115.0), (30.0, -112.0), (28.0, -110.0), (25.0, -108.0),
+        (22.0, -105.0), (20.0, -100.0), (18.0, -96.0), (19.0, -92.0),
+        (21.0, -88.0), (23.0, -85.0), (25.0, -82.0), (28.0, -80.0),
+        (30.0, -82.0), (32.0, -85.0), (35.0, -82.0), (37.0, -80.0),
+        (40.0, -78.0), (43.0, -76.0), (46.0, -72.0), (48.0, -68.0),
+        (50.0, -65.0), (52.0, -60.0), (55.0, -55.0), (60.0, -55.0),
+        (65.0, -60.0), (68.0, -65.0), (70.0, -75.0), (72.0, -85.0),
+        (72.0, -100.0), (72.0, -115.0), (72.0, -130.0), (72.0, -145.0),
+        (72.0, -160.0), (72.0, -168.0)
+    ]
+    static let southAmerica: [(latitude: Double, longitude: Double)] = [
+        (12.0, -78.0), (8.0, -77.0), (5.0, -75.0), (4.0, -70.0),
+        (5.0, -60.0), (0.0, -50.0), (-5.0, -35.0), (-15.0, -30.0),
+        (-22.0, -33.0), (-25.0, -40.0), (-30.0, -50.0), (-35.0, -55.0),
+        (-40.0, -60.0), (-45.0, -65.0), (-50.0, -70.0), (-52.0, -65.0),
+        (-50.0, -60.0), (-48.0, -55.0), (-45.0, -50.0), (-40.0, -45.0),
+        (-35.0, -40.0), (-25.0, -38.0), (-18.0, -35.0), (-15.0, -40.0),
+        (-10.0, -50.0), (-8.0, -60.0), (-5.0, -70.0), (0.0, -75.0),
+        (5.0, -78.0), (12.0, -78.0)
+    ]
+    static let europe: [(latitude: Double, longitude: Double)] = [
+        (72.0, -25.0), (70.0, -20.0), (68.0, -15.0), (65.0, -10.0),
+        (60.0, 0.0), (55.0, 10.0), (50.0, 15.0), (45.0, 15.0),
+        (42.0, 20.0), (40.0, 25.0), (38.0, 28.0), (36.0, 30.0),
+        (35.0, 35.0), (37.0, 40.0), (40.0, 45.0), (43.0, 50.0),
+        (55.0, 55.0), (60.0, 50.0), (65.0, 45.0), (70.0, 35.0),
+        (72.0, 25.0), (72.0, 10.0), (72.0, -5.0), (72.0, -25.0)
+    ]
+    static let africa: [(latitude: Double, longitude: Double)] = [
+        (37.0, -10.0), (35.0, -5.0), (32.0, 0.0), (30.0, 10.0),
+        (12.0, 15.0), (0.0, 12.0), (-12.0, 15.0), (-25.0, 20.0),
+        (-35.0, 20.0), (-35.0, 25.0), (-30.0, 30.0), (-20.0, 35.0),
+        (-10.0, 40.0), (0.0, 42.0), (12.0, 40.0), (20.0, 35.0),
+        (30.0, 30.0), (32.0, 25.0), (37.0, 20.0), (37.0, 10.0),
+        (37.0, 0.0), (37.0, -10.0)
+    ]
+    static let asia: [(latitude: Double, longitude: Double)] = [
+        (70.0, 25.0), (65.0, 35.0), (60.0, 45.0), (55.0, 55.0),
+        (50.0, 60.0), (45.0, 65.0), (40.0, 70.0), (35.0, 75.0),
+        (30.0, 80.0), (25.0, 85.0), (20.0, 90.0), (15.0, 100.0),
+        (20.0, 105.0), (25.0, 110.0), (30.0, 115.0), (35.0, 120.0),
+        (40.0, 130.0), (55.0, 140.0), (65.0, 145.0), (70.0, 150.0),
+        (75.0, 145.0), (75.0, 135.0), (75.0, 120.0), (75.0, 100.0),
+        (75.0, 80.0), (72.0, 60.0), (70.0, 40.0), (70.0, 25.0)
+    ]
+    static let australia: [(latitude: Double, longitude: Double)] = [
+        (-10.0, 110.0), (-12.0, 115.0), (-13.0, 125.0), (-14.0, 130.0),
+        (-15.0, 135.0), (-18.0, 145.0), (-22.0, 150.0), (-28.0, 155.0),
+        (-35.0, 150.0), (-35.0, 145.0), (-32.0, 135.0), (-30.0, 125.0),
+        (-28.0, 115.0), (-22.0, 110.0), (-18.0, 110.0), (-15.0, 115.0),
+        (-12.0, 120.0), (-10.0, 125.0), (-10.0, 135.0), (-10.0, 145.0),
+        (-10.0, 155.0), (-10.0, 165.0), (-12.0, 170.0), (-15.0, 170.0),
+        (-18.0, 165.0), (-18.0, 155.0), (-15.0, 145.0), (-13.0, 135.0),
+        (-12.0, 125.0), (-10.0, 115.0), (-10.0, 110.0)
+    ]
+    static let greenland: [(latitude: Double, longitude: Double)] = [
+        (83.0, -45.0), (82.0, -40.0), (80.0, -35.0), (78.0, -30.0),
+        (75.0, -25.0), (72.0, -30.0), (70.0, -40.0), (68.0, -45.0),
+        (65.0, -50.0), (63.0, -55.0), (65.0, -60.0), (70.0, -60.0),
+        (75.0, -55.0), (80.0, -50.0), (83.0, -45.0)
+    ]
+}
 
 struct AtlasHeader: View {
     @Environment(\.atlasTheme) private var theme
@@ -360,6 +430,12 @@ struct LightweightGlobeCanvas: View {
 struct GlobeShowcase: View {
     @Environment(\.atlasTheme) private var theme
     let style: AtlasGlobeStyle
+    @State private var settledLongitudeOffset: Double = -18
+    @GestureState private var dragTranslation: CGFloat = 0
+
+    private var activeLongitudeOffset: Double {
+        settledLongitudeOffset + Double(dragTranslation) * 0.32
+    }
 
     var body: some View {
         ZStack {
@@ -377,9 +453,18 @@ struct GlobeShowcase: View {
                     )
                 )
 
-            LightweightGlobeCanvas(style: style)
+            GlobeCanvas(style: style, longitudeOffset: activeLongitudeOffset)
                 .frame(width: 312, height: 312)
                 .shadow(color: AtlasColor.aqua.opacity(theme == .dark ? 0.22 : 0.08), radius: 30, y: 10)
+                .gesture(
+                    DragGesture(minimumDistance: 3)
+                        .updating($dragTranslation) { value, state, _ in
+                            state = value.translation.width
+                        }
+                        .onEnded { value in
+                            settledLongitudeOffset += Double(value.translation.width) * 0.32
+                        }
+                )
 
             VStack {
                 HStack(spacing: 8) {
@@ -692,13 +777,35 @@ struct GlobeCanvas: View {
     private func drawSurfaceTexture(in context: GraphicsContext, projection: GlobeProjection, sphereRect: CGRect) {
         switch style {
         case .realGeography:
-            for latitude in stride(from: -52.0, through: 58.0, by: 14.0) {
-                let samples = stride(from: -180.0, through: 180.0, by: 8.0).compactMap { longitude -> ProjectedPoint? in
-                    let latitudeWave = latitude + sin((longitude + longitudeOffset) * .pi / 28) * 2.2
-                    return projection.project(latitude: latitudeWave, longitude: longitude)
+            // 绘制大陆边界 - 使用 GeographyData 中的真实地理边界
+            let landColor = Color(red: 0.42, green: 0.55, blue: 0.26)  // 植被绿色
+            let coastColor = Color(red: 0.28, green: 0.38, blue: 0.18)  // 海岸线颜色
+            
+            func drawContinent(_ points: [(latitude: Double, longitude: Double)], fill: Color, stroke: Color) {
+                let projectedPoints = points.compactMap { point -> CGPoint? in
+                    let p = projection.project(latitude: point.latitude, longitude: point.longitude)
+                    return p?.point
                 }
-                strokeRibbon(samples, in: context, color: Color.white.opacity(0.05), lineWidth: latitude > 0 ? 8 : 6)
+                if projectedPoints.count > 2 {
+                    var path = Path()
+                    path.move(to: projectedPoints[0])
+                    for pt in projectedPoints.dropFirst() {
+                        path.addLine(to: pt)
+                    }
+                    path.closeSubpath()
+                    context.fill(path, with: .color(fill))
+                    context.stroke(path, with: .color(stroke), lineWidth: 1.2)
+                }
             }
+            
+            // 绘制各大洲
+            drawContinent(GeographyData.northAmerica, fill: landColor, stroke: coastColor)
+            drawContinent(GeographyData.southAmerica, fill: landColor, stroke: coastColor)
+            drawContinent(GeographyData.europe, fill: landColor, stroke: coastColor)
+            drawContinent(GeographyData.africa, fill: landColor, stroke: coastColor)
+            drawContinent(GeographyData.asia, fill: landColor, stroke: coastColor)
+            drawContinent(GeographyData.australia, fill: landColor, stroke: coastColor)
+            drawContinent(GeographyData.greenland, fill: Color.white.opacity(0.95), stroke: coastColor)
 
         case .vintageExplorer:
             for index in 0..<34 {
@@ -1159,13 +1266,13 @@ struct GlobeCanvas: View {
         let scaleBoost: CGFloat
         switch point.kind {
         case .shallowWater:
-            scaleBoost = 1.08
+            scaleBoost = 0.92
         case .desert, .ice:
-            scaleBoost = 1.04
+            scaleBoost = 0.82
         case .forest, .jungle:
-            scaleBoost = 0.96
+            scaleBoost = 0.76
         default:
-            scaleBoost = 1.0
+            scaleBoost = 0.72
         }
 
         let size = point.size * projected.scale * scaleBoost
@@ -1175,7 +1282,7 @@ struct GlobeCanvas: View {
             width: size,
             height: size
         )
-        let opacity = point.opacity * (0.60 + max(projected.depth, 0) * 0.40)
+        let opacity = point.opacity * (0.36 + max(projected.depth, 0) * 0.22)
         context.fill(Path(ellipseIn: rect), with: .color(point.color.opacity(opacity)))
     }
 
@@ -1874,10 +1981,11 @@ private struct AtlasGlobeScene {
                 let point = GlobePolygonPoint(latitude: latitude, longitude: longitude)
 
                 if let terrain = classification.first(where: { polygonContains(point, polygon: $0.polygon) }) {
+                    let jitter = surfaceJitter(latitude: latitude, longitude: longitude)
                     points.append(
                         GlobeSurfacePoint(
-                            latitude: latitude,
-                            longitude: longitude,
+                            latitude: latitude + jitter.latitude,
+                            longitude: longitude + jitter.longitude,
                             size: terrain.size,
                             opacity: terrain.opacity,
                             color: terrain.color,
@@ -1888,15 +1996,16 @@ private struct AtlasGlobeScene {
                 }
 
                 if shallowWaterPolygons.contains(where: { polygonContains(point, polygon: $0) }) {
+                    let jitter = surfaceJitter(latitude: latitude, longitude: longitude)
                     let tone = style == .nightAtlas
                         ? Color(red: 0.16, green: 0.28, blue: 0.34)
                         : Color(red: 0.67, green: 0.84, blue: 0.87)
                     points.append(
                         GlobeSurfacePoint(
-                            latitude: latitude,
-                            longitude: longitude,
-                            size: style == .nightAtlas ? 1.75 : 1.95,
-                            opacity: style == .nightAtlas ? 0.28 : 0.36,
+                            latitude: latitude + jitter.latitude,
+                            longitude: longitude + jitter.longitude,
+                            size: style == .nightAtlas ? 1.15 : 1.25,
+                            opacity: style == .nightAtlas ? 0.15 : 0.22,
                             color: tone,
                             kind: .shallowWater
                         )
@@ -1905,15 +2014,16 @@ private struct AtlasGlobeScene {
                 }
 
                 if landPolygons.contains(where: { polygonContains(point, polygon: $0) }) {
+                    let jitter = surfaceJitter(latitude: latitude, longitude: longitude)
                     let landTone = style == .nightAtlas
                         ? Color(red: 0.19, green: 0.24, blue: 0.15)
                         : Color(red: 0.57, green: 0.63, blue: 0.40)
                     points.append(
                         GlobeSurfacePoint(
-                            latitude: latitude,
-                            longitude: longitude,
-                            size: style == .nightAtlas ? 1.6 : 1.8,
-                            opacity: style == .nightAtlas ? 0.18 : 0.24,
+                            latitude: latitude + jitter.latitude,
+                            longitude: longitude + jitter.longitude,
+                            size: style == .nightAtlas ? 0.92 : 1.05,
+                            opacity: style == .nightAtlas ? 0.08 : 0.13,
                             color: landTone,
                             kind: .land
                         )
@@ -1936,22 +2046,30 @@ private struct AtlasGlobeScene {
         return terrainPolygons(for: style).map { polygon in
             let hint = polygon.color
             if hint == desert || approxMatch(hint, desert) {
-                return (polygon, .desert, desert, style == .nightAtlas ? 0.34 : 0.42, style == .nightAtlas ? 1.95 : 2.05)
+                return (polygon, .desert, desert, style == .nightAtlas ? 0.22 : 0.30, style == .nightAtlas ? 1.28 : 1.40)
             }
             if hint == jungle || approxMatch(hint, jungle) {
-                return (polygon, .jungle, jungle, style == .nightAtlas ? 0.30 : 0.38, style == .nightAtlas ? 1.85 : 1.95)
+                return (polygon, .jungle, jungle, style == .nightAtlas ? 0.20 : 0.28, style == .nightAtlas ? 1.20 : 1.34)
             }
             if hint == forest || approxMatch(hint, forest) {
-                return (polygon, .forest, forest, style == .nightAtlas ? 0.28 : 0.36, style == .nightAtlas ? 1.8 : 1.9)
+                return (polygon, .forest, forest, style == .nightAtlas ? 0.18 : 0.26, style == .nightAtlas ? 1.16 : 1.28)
             }
             if hint == plateau || approxMatch(hint, plateau) {
-                return (polygon, .plateau, plateau, style == .nightAtlas ? 0.28 : 0.34, style == .nightAtlas ? 1.8 : 1.95)
+                return (polygon, .plateau, plateau, style == .nightAtlas ? 0.17 : 0.24, style == .nightAtlas ? 1.14 : 1.24)
             }
             if hint == tundra || approxMatch(hint, tundra) {
-                return (polygon, .tundra, tundra, style == .nightAtlas ? 0.24 : 0.32, style == .nightAtlas ? 1.75 : 1.9)
+                return (polygon, .tundra, tundra, style == .nightAtlas ? 0.16 : 0.22, style == .nightAtlas ? 1.10 : 1.20)
             }
-            return (polygon, .ice, ice, style == .nightAtlas ? 0.32 : 0.42, style == .nightAtlas ? 1.9 : 2.0)
+            return (polygon, .ice, ice, style == .nightAtlas ? 0.22 : 0.30, style == .nightAtlas ? 1.22 : 1.32)
         }
+    }
+
+    private static func surfaceJitter(latitude: Double, longitude: Double) -> (latitude: Double, longitude: Double) {
+        let seedA = sin(latitude * 12.9898 + longitude * 78.233) * 43758.5453
+        let seedB = cos(latitude * 4.123 + longitude * 19.321) * 12741.371
+        let fracA = seedA - floor(seedA)
+        let fracB = seedB - floor(seedB)
+        return ((fracA - 0.5) * 0.62, (fracB - 0.5) * 0.62)
     }
 
     private static func polygonContains(_ point: GlobePolygonPoint, polygon: GlobePolygon) -> Bool {
@@ -2390,6 +2508,16 @@ private struct AtlasGlobeScene {
             afroEurasiaColor = Color(red: 0.57, green: 0.59, blue: 0.34)
             australiaColor = Color(red: 0.67, green: 0.51, blue: 0.30)
             greenlandColor = Color.white.opacity(0.82)
+            
+            // Use improved continent data from GeographyData
+            return createRealGeographyPolygons(
+                stroke: stroke,
+                northAmericaColor: northAmericaColor,
+                southAmericaColor: southAmericaColor,
+                afroEurasiaColor: afroEurasiaColor,
+                australiaColor: australiaColor,
+                greenlandColor: greenlandColor
+            )
         default:
             return []
         }
@@ -2621,6 +2749,81 @@ private struct AtlasGlobeScene {
                 stroke: stroke,
                 opacity: style == .nightAtlas ? 0.70 : 0.88,
                 lineWidth: style == .nightAtlas ? 0.55 : 0.72
+            )
+        ]
+    }
+
+
+    // MARK: - Real Geography Support using improved GeographyData
+    
+    /// Creates continent polygons using improved data from GeographyData
+    private static func createRealGeographyPolygons(
+        stroke: Color,
+        northAmericaColor: Color,
+        southAmericaColor: Color,
+        afroEurasiaColor: Color,
+        australiaColor: Color,
+        greenlandColor: Color
+    ) -> [GlobePolygon] {
+        
+        // Convert GeographyData tuples to GlobePolygonPoint
+        let northAmericaPoints: [GlobePolygonPoint] = GeographyData.northAmerica.map { GlobePolygonPoint(latitude: $0.latitude, longitude: $0.longitude) }
+        let southAmericaPoints: [GlobePolygonPoint] = GeographyData.southAmerica.map { GlobePolygonPoint(latitude: $0.latitude, longitude: $0.longitude) }
+        let europePoints: [GlobePolygonPoint] = GeographyData.europe.map { GlobePolygonPoint(latitude: $0.latitude, longitude: $0.longitude) }
+        let africaPoints: [GlobePolygonPoint] = GeographyData.africa.map { GlobePolygonPoint(latitude: $0.latitude, longitude: $0.longitude) }
+        let asiaPoints: [GlobePolygonPoint] = GeographyData.asia.map { GlobePolygonPoint(latitude: $0.latitude, longitude: $0.longitude) }
+        let australiaPoints: [GlobePolygonPoint] = GeographyData.australia.map { GlobePolygonPoint(latitude: $0.latitude, longitude: $0.longitude) }
+        let greenlandPoints: [GlobePolygonPoint] = GeographyData.greenland.map { GlobePolygonPoint(latitude: $0.latitude, longitude: $0.longitude) }
+        
+        return [
+            GlobePolygon(
+                points: northAmericaPoints,
+                color: northAmericaColor,
+                stroke: stroke,
+                opacity: 0.88,
+                lineWidth: 0.75
+            ),
+            GlobePolygon(
+                points: southAmericaPoints,
+                color: southAmericaColor,
+                stroke: stroke,
+                opacity: 0.90,
+                lineWidth: 0.75
+            ),
+            GlobePolygon(
+                points: greenlandPoints,
+                color: greenlandColor,
+                stroke: stroke,
+                opacity: 0.72,
+                lineWidth: 0.7
+            ),
+            GlobePolygon(
+                points: europePoints,
+                color: afroEurasiaColor,
+                stroke: stroke,
+                opacity: 0.90,
+                lineWidth: 0.75
+            ),
+            GlobePolygon(
+                points: africaPoints,
+                color: afroEurasiaColor,
+                stroke: stroke,
+                opacity: 0.90,
+                lineWidth: 0.75
+            ),
+            GlobePolygon(
+                points: asiaPoints,
+                color: afroEurasiaColor,
+                stroke: stroke,
+                opacity: 0.90,
+                lineWidth: 0.75
+            ),
+            GlobePolygon(
+                points: australiaPoints,
+                color: australiaColor,
+                stroke: stroke,
+                opacity: 0.88,
+                lineWidth: 0.72
             )
         ]
     }

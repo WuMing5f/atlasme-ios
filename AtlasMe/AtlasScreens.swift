@@ -21,7 +21,7 @@ struct HomeView: View {
                         Button {
                             showsGlobeStyle = true
                         } label: {
-                            Image(systemName: "bell")
+                            Image(systemName: "globe.europe.africa.fill")
                                 .foregroundStyle(AtlasColor.text(theme))
                         }
                     )

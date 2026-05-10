@@ -300,6 +300,12 @@ struct AtlasRootView: View {
     @State private var theme: AtlasTheme = .dark
     @State private var globeStyle: AtlasGlobeStyle = .nightAtlas
 
+    init(initialTab: AtlasTab? = nil) {
+        if let tab = initialTab {
+            _selectedTab = State(initialValue: tab)
+        }
+    }
+
     var body: some View {
         ZStack(alignment: .bottom) {
             Group {
@@ -406,6 +412,7 @@ struct AtlasTabBar: View {
                 .stroke(theme == .dark ? Color.white.opacity(0.14) : Color.black.opacity(0.07))
         )
         .shadow(color: theme == .dark ? Color.black.opacity(0.38) : Color.black.opacity(0.08), radius: 24, y: 12)
+        .accessibilityIdentifier("MainTabBar")
     }
 
     private func tab(_ tab: AtlasTab, icon: String, label: String) -> some View {
@@ -422,5 +429,6 @@ struct AtlasTabBar: View {
             .frame(maxWidth: .infinity)
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("tab_\(tab.rawValue)")
     }
 }
