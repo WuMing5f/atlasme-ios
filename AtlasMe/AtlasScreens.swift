@@ -232,10 +232,10 @@ struct MapReplayView: View {
                                 Text(copy.currentSegment.uppercased())
                                     .font(.atlasText(11, weight: .black))
                                     .foregroundStyle(AtlasColor.gold)
-                                Text("Train to Machu Picchu")
+                                Text(copy.trainSegmentTitle)
                                     .font(.atlasDisplay(19, weight: .semibold))
                                     .foregroundStyle(AtlasColor.text(theme))
-                                Text("Ollantaytambo → Aguas Calientes\n1h 45m · 43 km")
+                                Text(copy.trainSegmentDetail)
                                     .font(.atlasText(12))
                                     .foregroundStyle(AtlasColor.subtext(theme))
                             }
@@ -270,6 +270,7 @@ struct ExploreView: View {
     @Environment(\.copy) private var copy
     @Environment(\.atlasLanguage) private var language
     @Environment(\.atlasTheme) private var theme
+    @State private var isFavorited = false
 
     var body: some View {
         DarkScreen(
@@ -277,10 +278,11 @@ struct ExploreView: View {
             subtitle: copy.exploreSubtitle,
             trailing: AnyView(
                 Button {
+                    isFavorited.toggle()
                 } label: {
-                    Image(systemName: "heart")
+                    Image(systemName: isFavorited ? "heart.fill" : "heart")
                         .font(.system(size: 17, weight: .bold))
-                        .foregroundStyle(AtlasColor.text(theme))
+                        .foregroundStyle(isFavorited ? AtlasColor.coral : AtlasColor.text(theme))
                 }
                 .buttonStyle(.plain)
             )
@@ -289,7 +291,7 @@ struct ExploreView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass")
                         .foregroundStyle(AtlasColor.subtext(theme))
-                    Text("Where to next?")
+                    Text(copy.whereToNext)
                         .font(.atlasText(13))
                         .foregroundStyle(AtlasColor.subtext(theme))
                     Spacer()
@@ -614,7 +616,7 @@ struct GlobeStyleSheet: View {
                     Text(copy.globeStyle)
                         .font(.atlasDisplay(25, weight: .semibold))
                         .foregroundStyle(AtlasColor.text(theme))
-                    Text("Choose how AtlasMe draws your world.")
+                    Text(copy.globeStyleDescription)
                         .font(.atlasText(13))
                         .foregroundStyle(AtlasColor.subtext(theme))
 
@@ -632,7 +634,7 @@ struct GlobeStyleSheet: View {
                                     .padding(.vertical, 4)
                                     .background(AtlasColor.gold.opacity(0.12), in: Capsule())
                             }
-                            Text("AtlasMe's globe is now treated like a collectible surface system: core mode, signature mode, and premium skins.")
+                            Text(copy.globeAtelierDescription)
                                 .font(.atlasText(12))
                                 .foregroundStyle(AtlasColor.subtext(theme))
                                 .fixedSize(horizontal: false, vertical: true)
@@ -702,6 +704,7 @@ struct GlobeStyleSheet: View {
 struct AddJourneySheet: View {
     @Environment(\.copy) private var copy
     @Environment(\.atlasTheme) private var theme
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         ZStack {
@@ -759,6 +762,7 @@ struct AddJourneySheet: View {
                         .frame(height: 150)
 
                     Button {
+                        dismiss()
                     } label: {
                         Text(copy.saveJourney)
                             .font(.atlasText(16, weight: .black))
@@ -783,25 +787,6 @@ struct AddJourneySheet: View {
     }
 }
 
-struct PrototypeField: View {
-    @Environment(\.atlasTheme) private var theme
-    let label: String
-    let value: String
-
-    var body: some View {
-        GlassCard {
-            VStack(alignment: .leading, spacing: 8) {
-                Text(label)
-                    .font(.atlasText(11, weight: .black))
-                    .foregroundStyle(AtlasColor.subtext(theme))
-                Text(value)
-                    .font(.atlasText(16, weight: .bold))
-                    .foregroundStyle(AtlasColor.text(theme))
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-    }
-}
 
 struct RouteStopRow: View {
     @Environment(\.atlasTheme) private var theme
