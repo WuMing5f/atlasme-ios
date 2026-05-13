@@ -360,14 +360,10 @@ struct LightweightGlobeCanvas: View {
 struct GlobeShowcase: View {
     @Environment(\.atlasTheme) private var theme
     let style: AtlasGlobeStyle
-    @State private var settledLongitudeOffset: Double = -18
-    @GestureState private var dragTranslation: CGFloat = 0
+    @State private var rotation: Double = -18
+    @State private var dragStartRotation: Double = -18
     @State private var autoRotationTask: Task<Void, Never>?
     @State private var isGlobeMode: Bool = true
-
-    private var activeLongitudeOffset: Double {
-        settledLongitudeOffset + Double(dragTranslation) * 0.32
-    }
 
     var body: some View {
         ZStack {
@@ -387,11 +383,7 @@ struct GlobeShowcase: View {
 
             Group {
                 if isGlobeMode {
-                    ZStack {
-                        GlobeSceneKitView(style: style, rotation: $settledLongitudeOffset)
-                        // 城市和路线标记层
-                        GlobeMarkerOverlay(longitudeOffset: activeLongitudeOffset, style: style)
-                    }
+                    GlobeSceneKitView(style: style, rotation: $rotation)
                 } else {
                     FlatMapView(style: style)
                 }
@@ -399,29 +391,27 @@ struct GlobeShowcase: View {
             .frame(width: 312, height: 312)
             .shadow(color: AtlasColor.aqua.opacity(theme == .dark ? 0.22 : 0.08), radius: 30, y: 10)
             .gesture(
-                DragGesture(minimumDistance: 3)
-                    .updating($dragTranslation) { value, state, _ in
-                        state = value.translation.width
+                DragGesture(minimumDistance: 1)
+                    .onChanged { value in
+                        rotation = dragStartRotation + Double(value.translation.width) * 0.32
                     }
-                    .onEnded { value in
-                        settledLongitudeOffset += Double(value.translation.width) * 0.32
+                    .onEnded { _ in
+                        dragStartRotation = rotation
                     }
             )
+            .onChange(of: isGlobeMode) { _ in
+                // 切换模式时重置拖拽基准
+                dragStartRotation = rotation
+            }
 
             VStack {
                 HStack(spacing: 8) {
                     Image(systemName: isGlobeMode ? "globe.europe.africa.fill" : "map.fill")
                         .font(.system(size: 9, weight: .bold))
                         .foregroundStyle(AtlasColor.gold)
-                    Text(style.title)
+                    Text(isGlobeMode ? "3D 地球" : "2D 地图")
                         .font(.atlasText(9.5, weight: .black))
                         .foregroundStyle(AtlasColor.text(theme))
-                    Text(style.capsule.uppercased())
-                        .font(.atlasText(7.2, weight: .black))
-                        .foregroundStyle(AtlasColor.gold)
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 2.5)
-                        .background(AtlasColor.gold.opacity(0.12), in: Capsule())
                     Spacer()
                     GlobeViewModeButton(isGlobeMode: $isGlobeMode)
                 }
@@ -450,7 +440,7 @@ struct GlobeShowcase: View {
             autoRotationTask = Task {
                 while !Task.isCancelled {
                     try? await Task.sleep(for: .milliseconds(50))
-                    settledLongitudeOffset += 0.15
+                    rotation = rotation + 0.15
                 }
             }
         }
@@ -909,9 +899,9 @@ struct GlobeViewModeButton: View {
             }
         } label: {
             HStack(spacing: 4) {
-                Image(systemName: isGlobeMode ? "globe.europe.africa.fill" : "map.fill")
+                Image(systemName: isGlobeMode ? "map.fill" : "globe.europe.africa.fill")
                     .font(.system(size: 11, weight: .bold))
-                Text(isGlobeMode ? "3D" : "2D")
+                Text(isGlobeMode ? "切换 2D" : "切换 3D")
                     .font(.atlasText(9, weight: .bold))
             }
             .foregroundStyle(AtlasColor.gold)
@@ -1563,6 +1553,34 @@ struct GlobeSceneKitView: UIViewRepresentable {
         let earth = SCNNode(geometry: sphere)
         earth.name = "earth"
         scene.rootNode.addChildNode(earth)
+
+        // 城市标记 — 钉在地球表面
+        for (_, lat, lon, dotColor) in globeCities {
+            let latRad = Float(lat * .pi / 180)
+            let lonRad = Float(lon * .pi / 180)
+            let r: Float = 1.016 // 略高于球面
+            let pos = SCNVector3(
+                x: r * cos(latRad) * sin(lonRad),
+                y: r * sin(latRad),
+                z: r * cos(latRad) * cos(lonRad)
+            )
+            // 光晕球
+            let haloGeo = SCNSphere(radius: 0.025)
+            haloGeo.firstMaterial?.diffuse.contents = UIColor(dotColor).withAlphaComponent(0.5)
+            haloGeo.firstMaterial?.emission.contents = UIColor(dotColor)
+            haloGeo.firstMaterial?.lightingModel = .constant
+            let haloNode = SCNNode(geometry: haloGeo)
+            haloNode.position = pos
+            earth.addChildNode(haloNode)
+            // 核心点
+            let dotGeo = SCNSphere(radius: 0.010)
+            dotGeo.firstMaterial?.diffuse.contents = UIColor.white
+            dotGeo.firstMaterial?.emission.contents = UIColor.white
+            dotGeo.firstMaterial?.lightingModel = .constant
+            let dotNode = SCNNode(geometry: dotGeo)
+            dotNode.position = pos
+            earth.addChildNode(dotNode)
+        }
 
         // 大气光晕
         let atmoGeo = SCNSphere(radius: 1.055)
