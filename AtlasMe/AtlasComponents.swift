@@ -364,6 +364,8 @@ struct GlobeShowcase: View {
     @State private var dragStartRotation: Double = -18
     @State private var autoRotationTask: Task<Void, Never>?
     @State private var isGlobeMode: Bool = true
+    @State private var zoomLevel: CGFloat = 1.0
+    @State private var lastPinchZoom: CGFloat = 1.0
 
     var body: some View {
         ZStack {
@@ -383,9 +385,10 @@ struct GlobeShowcase: View {
 
             Group {
                 if isGlobeMode {
-                    GlobeSceneKitView(style: style, rotation: $rotation)
+                    GlobeSceneKitView(style: style, rotation: $rotation, zoom: zoomLevel)
                 } else {
                     FlatMapView(style: style)
+                        .scaleEffect(zoomLevel)
                 }
             }
             .frame(width: 312, height: 312)
@@ -399,9 +402,22 @@ struct GlobeShowcase: View {
                         dragStartRotation = rotation
                     }
             )
+            .simultaneousGesture(
+                MagnificationGesture()
+                    .onChanged { value in
+                        zoomLevel = min(3.0, max(0.7, lastPinchZoom * value))
+                    }
+                    .onEnded { _ in
+                        lastPinchZoom = zoomLevel
+                    }
+            )
             .onChange(of: isGlobeMode) { _ in
-                // 切换模式时重置拖拽基准
                 dragStartRotation = rotation
+            }
+            .onTapGesture(count: 2) {
+                withAnimation(.spring(response: 0.4)) {
+                    zoomLevel = 1.0
+                }
             }
 
             VStack {
@@ -785,7 +801,7 @@ private func projectGlobePoint(lat: Double, lon: Double, center: CGPoint, radius
     )
 }
 
-// 城市数据 — 20+ 城市标记
+// 城市数据 — 45 个城市标记，覆盖全球
 private let globeCities: [(String, Double, Double, Color)] = [
     ("Cusco", -13.5, -72.0, AtlasColor.gold),
     ("Paris", 48.8, 2.3, AtlasColor.paleGold),
@@ -807,6 +823,31 @@ private let globeCities: [(String, Double, Double, Color)] = [
     ("Singapore", 1.3, 103.8, AtlasColor.aqua),
     ("Seoul", 37.5, 127.0, AtlasColor.green),
     ("Rio", -22.9, -43.2, AtlasColor.gold),
+    ("Toronto", 43.7, -79.4, AtlasColor.coral),
+    ("Berlin", 52.5, 13.4, AtlasColor.paleGold),
+    ("Rome", 41.9, 12.5, AtlasColor.gold),
+    ("Barcelona", 41.4, 2.2, AtlasColor.aqua),
+    ("Amsterdam", 52.4, 4.9, AtlasColor.green),
+    ("Prague", 50.1, 14.4, AtlasColor.paleGold),
+    ("Vienna", 48.2, 16.4, AtlasColor.coral),
+    ("Budapest", 47.5, 19.0, AtlasColor.gold),
+    ("Athens", 38.0, 23.7, AtlasColor.aqua),
+    ("Lisbon", 38.7, -9.1, AtlasColor.green),
+    ("Oslo", 59.9, 10.7, AtlasColor.paleGold),
+    ("Stockholm", 59.3, 18.1, AtlasColor.coral),
+    ("Helsinki", 60.2, 24.9, AtlasColor.gold),
+    ("Warsaw", 52.2, 21.0, AtlasColor.aqua),
+    ("Nairobi", -1.3, 36.8, AtlasColor.green),
+    ("Casablanca", 33.6, -7.6, AtlasColor.paleGold),
+    ("Lagos", 6.5, 3.4, AtlasColor.coral),
+    ("Sao Paulo", -23.5, -46.6, AtlasColor.gold),
+    ("Buenos Aires", -34.6, -58.4, AtlasColor.aqua),
+    ("Santiago", -33.4, -70.6, AtlasColor.green),
+    ("Bogota", 4.6, -74.1, AtlasColor.paleGold),
+    ("Chicago", 41.9, -87.6, AtlasColor.coral),
+    ("San Francisco", 37.8, -122.4, AtlasColor.gold),
+    ("Shanghai", 31.2, 121.5, AtlasColor.aqua),
+    ("Hong Kong", 22.3, 114.2, AtlasColor.green),
 ]
 
 private let cityLights: [(Double, Double)] = [
@@ -1522,6 +1563,7 @@ private func tintedEarth(_ image: UIImage, color: UIColor, brightness: CGFloat) 
 struct GlobeSceneKitView: UIViewRepresentable {
     let style: AtlasGlobeStyle
     @Binding var rotation: Double
+    let zoom: CGFloat
 
     func makeUIView(context: Context) -> SCNView {
         let scnView = SCNView()
@@ -1534,11 +1576,12 @@ struct GlobeSceneKitView: UIViewRepresentable {
 
         // 相机
         let cam = SCNNode()
+        cam.name = "camera"
         cam.camera = SCNCamera()
         cam.camera?.fieldOfView = 38
         cam.camera?.zNear = 0.1
         cam.camera?.zFar = 100
-        cam.position = SCNVector3(0, 0.12, 3.3)
+        cam.position = SCNVector3(0, 0.12, Float(3.3 / zoom))
         scene.rootNode.addChildNode(cam)
 
         // 地球
@@ -1633,6 +1676,17 @@ struct GlobeSceneKitView: UIViewRepresentable {
         earth.eulerAngles = SCNVector3(0.28, Float(rotation * .pi / 180), 0)
         SCNTransaction.commit()
 
+        // 缩放：调整相机距离
+        if context.coordinator.lastZoom != zoom,
+           let cam = uiView.scene?.rootNode.childNode(withName: "camera", recursively: false) {
+            context.coordinator.lastZoom = zoom
+            let baseDistance: Float = 3.3
+            SCNTransaction.begin()
+            SCNTransaction.animationDuration = 0.15
+            cam.position = SCNVector3(0, 0.12, baseDistance / Float(zoom))
+            SCNTransaction.commit()
+        }
+
         if context.coordinator.lastStyle != style {
             context.coordinator.lastStyle = style
             earth.geometry?.firstMaterial?.diffuse.contents = getEarthTexture(style: style)
@@ -1646,6 +1700,7 @@ struct GlobeSceneKitView: UIViewRepresentable {
 
     class Coordinator {
         var lastStyle: AtlasGlobeStyle?
+        var lastZoom: CGFloat?
         weak var scnView: SCNView?
     }
 }
